@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<!--
+  gcloudlicensing - header.html
+
+  Copyright (c) 2022-2023, Slinky Software
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as
+  published by the Free Software Foundation, either version 3 of the
+  License, or (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU Affero General Public License for more details.
+
+  A copy of the GNU Affero General Public License is located in the 
+  AGPL-3.0.md supplied with the source code.
+
+-->
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+        <title th:text="${pagetitle}"></title>
+    </head>
+
+    <body>
+
+        <div th:fragment="header" th:remove="tag">
+            <div class="row">&nbsp;</div>
+            <div class="row justify-content-between px-3">
+
+                <div class="col-11 align-middle">
+                    <!--                    <div sec:authorize="isAuthenticated()">-->
+                    <nav class="navbar navbar-expand-lg justify-content-left">
+                        <div class="container-fluid">
+                            <a class="navbar-brand" href="#">Navbar</a>
+                            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                                <span class="navbar-toggler-icon"></span>
+                            </button>
+                            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                                <ul class="navbar-nav me-auto mb-2 mb-lg-0">  
+                                    <li class="nav-item dropdown">
+                                        <a class="nav-link waves-effect dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown">Drop Down</a>
+                                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+<!--                                            <li><a class="dropdown-item" th:classappend="${activeLink == 'frontend/createuser' ? 'text-danger' : 'text-muted'}" th:href="@{/frontend/createuser}">Option 1</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item" th:classappend="${activeLink == 'frontend/finduser' ? 'text-danger' : 'text-muted'}" th:href="@{/frontend/finduser}">Option 2</a></li>-->
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </nav>
+                    <!--                    </div>-->
+                </div>    
+                <div class="col-1 text-right"><img class="img-responsive" alt="Logo" th:src="@{${appLogo}}" src="" style="max-width:auto; height:75px;" /></div>
+            </div>
+
+            <div class="row">&nbsp;</div>
+
+            <div class="row px-3" id="jsError" style="display: none;" onclick="$('#jsError').hide();">
+                <div class="col-12 alert alert-danger fade show text-center alert-dismissible" role="alert">
+                    <span id="jsErrorText"></span>
+                    <button type="button" class="close" onclick="$('#jsError').hide();">&times;</button>
+                </div>         
+            </div>
+            <div class="row px-3" id="jsSuccess" style="display: none;" onclick="$('#jsSuccess').hide();">
+                <div class="col-12 alert alert-success fade show text-center alert-dismissible" role="alert">
+                    <span id="jsSuccessText"></span>
+                    <button type="button" class="close" onclick="$('#jsSuccess').hide();">&times;</button>
+                </div>
+            </div>
+            <div th:if="${showError == 1}" th:remove="tag">
+                <div class="row px-3" id="thError" onclick="$('#thError').hide();">
+                    <div class="col-12 alert alert-danger fade show text-center alert-dismissible" role="alert">
+                        <span th:text="${errorText}"></span>
+                        <button type="button" class="close" onclick="$('#thError').hide();">&times;</button>
+                    </div>         
+                </div>
+            </div>
+            <div th:if="${showSuccess == 1}" th:remove="tag">
+                <div class="row px-3" id="thSuccess" onclick="$('#thSuccess').hide();">
+                    <div class="col-12 alert alert-success fade show text-center alert-dismissible" role="alert">
+                        <span th:text="${successText}"></span>
+                        <button type="button" class="close" onclick="$('#thSuccess').hide();">&times;</button>
+                    </div>         
+                </div>
+            </div>
+        </div>
+
+
+        <div th:fragment="footer" th:remove="tag">
+            <div class="row">&nbsp;</div>
+            <div class="row">&nbsp;</div>
+            <div class="row">&nbsp;</div>
+            <div class="col-12 fixed-bottom py-2 blue-grey lighten-5" style="z-order: 9999;">
+                <div class="container-fluid">
+                    <div class="row justify-content-between">
+                        <div class="col-4 align-middle">
+                            <!--<div sec:authorize="isAuthenticated()" th:remove="tag"><small class="font-weight-lighter">You are currently logged in as: <span id="authUserName" sec:authentication="name">username</span> (<a id="mnuLogout" th:href="@{/auth/logout}">Logout</a>)</small></div>-->
+                        </div>
+                        <div class="col-4 text-center align-middle"><small class="font-weight-lighter" th:text="${appver}"></small></div>
+                        <div class="col-4 text-right align-middle"><small class="font-weight-lighter"><div th:remove="tag" th:text="${copyright}">&copy;</div></small></div>
+                    </div>
+                </div>
+            </div>
+            <div th:replace="segments/scripts:: footer" th:remove="tag">Scripts</div>
+
+        </div>
+
+
+
+    </body>
+</html>
