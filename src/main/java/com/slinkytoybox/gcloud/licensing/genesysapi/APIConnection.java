@@ -47,7 +47,7 @@ public class APIConnection {
     private PureCloudRegionHosts region = null;
     private ApiClient apiClient;
     
-    private final static String USER_AGENT = "GCloud-Management-Suite";
+    private final static String USER_AGENT = "GCloud-License-Management";
     
     
     @Autowired

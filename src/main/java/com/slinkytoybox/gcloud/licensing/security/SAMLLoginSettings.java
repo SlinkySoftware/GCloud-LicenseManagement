@@ -144,9 +144,9 @@ public class SAMLLoginSettings implements Customizer<Saml2LoginConfigurer<HttpSe
     public RoleHierarchy roleHierarchy() {
         RoleHierarchyImpl roleHierarchy = new RoleHierarchyImpl();
         String hierarchy = "";
-        hierarchy += "ROLE4 > ROLE3 \n";
-        hierarchy += "ROLE4 > ROLE2 \n";
-        hierarchy += "ROLE4 > ROLE1 \n";
+//        hierarchy += "ROLE4 > ROLE3 \n";
+//        hierarchy += "ROLE4 > ROLE2 \n";
+//        hierarchy += "ROLE4 > ROLE1 \n";
         roleHierarchy.setHierarchy(hierarchy);
         return roleHierarchy;
     }
