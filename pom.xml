@@ -47,6 +47,7 @@
         <oracle.version>21.8.0.0</oracle.version>
         <thymeleaf.version>3.1.1.RELEASE</thymeleaf.version>
         <opensaml.version>4.2.0</opensaml.version>
+        <purecloud.version>169.0.0</purecloud.version>
     </properties>
 
     <dependencies>
@@ -79,6 +80,7 @@
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-saml2-service-provider</artifactId>
+            <version>6.0.1</version>
         </dependency>
         <dependency>
             <groupId>org.opensaml</groupId>
@@ -129,7 +131,7 @@
         <dependency>
             <groupId>com.mypurecloud</groupId>
             <artifactId>platform-client-v2</artifactId>
-            <version>169.0.0</version>
+            <version>${purecloud.version}</version>
         </dependency>
     </dependencies>
 
