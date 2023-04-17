@@ -99,7 +99,8 @@
                 <div class="container-fluid">
                     <div class="row justify-content-between">
                         <div class="col-4 align-middle">
-                            <!--<div sec:authorize="isAuthenticated()" th:remove="tag"><small class="font-weight-lighter">You are currently logged in as: <span id="authUserName" sec:authentication="name">username</span> (<a id="mnuLogout" th:href="@{/auth/logout}">Logout</a>)</small></div>-->
+                            <div sec:authorize="isAuthenticated()" th:remove="tag"><small class="font-weight-lighter">You are currently logged in as: <span id="authUserName" sec:authentication="name">username</span> (<a id="mnuLogout" th:href="@{/auth/logout}">Logout</a>)</small></div>
+                            <div sec:authorize="isAnonymous()" th:remove="tag"><small class="font-weight-lighter">You are not currently logged in.(<a id="mnuLogin" th:href="@{/auth/login}">Login</a>)</small></div>
                         </div>
                         <div class="col-4 text-center align-middle"><small class="font-weight-lighter" th:text="${appver}"></small></div>
                         <div class="col-4 text-right align-middle"><small class="font-weight-lighter"><div th:remove="tag" th:text="${copyright}">&copy;</div></small></div>
