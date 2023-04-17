@@ -21,6 +21,7 @@ package com.slinkytoybox.gcloud.licensing.apiconnection;
 
 import com.zaxxer.hikari.HikariDataSource;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -97,7 +98,7 @@ public class CloudDatabaseConnection {
         log.trace("{}Set pool parameters: {}", logPrefix, poolSource);
 
         log.info("{}Starting database pool", logPrefix);
-        
+
         try (Connection conn = poolSource.getConnection()) {
             log.debug("{}Got SQL connection from pool. Testing", logPrefix);
             if (conn.isValid(5)) {
@@ -129,6 +130,15 @@ public class CloudDatabaseConnection {
         }
         log.trace("{}Leaving method", logPrefix);
 
+    }
+
+    @PreDestroy
+    public void stopDatabase() {
+        final String logPrefix = "stopDatabase() - ";
+        log.trace("{}Entering Method", logPrefix);
+        log.info("{}Shutting down Cloud Database connections", logPrefix);
+        poolSource.close();
+        log.trace("{}Leaving method", logPrefix);
     }
 
     public Connection getDatabaseConnection() throws SQLException {
