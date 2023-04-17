@@ -31,9 +31,10 @@
             <div class="row">&nbsp;</div>
             <div class="row justify-content-between px-3">
 
-                <div class="col-11 align-middle">
+                <div class="col-11 align-middle text-left">
+                    <h3>PureCloud License Management</h3>
                     <!--                    <div sec:authorize="isAuthenticated()">-->
-                    <nav class="navbar navbar-expand-lg justify-content-left">
+<!--                    <nav class="navbar navbar-expand-lg justify-content-left">
                         <div class="container-fluid">
                             <a class="navbar-brand" href="#">Navbar</a>
                             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,15 +45,15 @@
                                     <li class="nav-item dropdown">
                                         <a class="nav-link waves-effect dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown">Drop Down</a>
                                         <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-<!--                                            <li><a class="dropdown-item" th:classappend="${activeLink == 'frontend/createuser' ? 'text-danger' : 'text-muted'}" th:href="@{/frontend/createuser}">Option 1</a></li>
+                                            <li><a class="dropdown-item" th:classappend="${activeLink == 'frontend/createuser' ? 'text-danger' : 'text-muted'}" th:href="@{/frontend/createuser}">Option 1</a></li>
                                             <li><hr class="dropdown-divider"></li>
-                                            <li><a class="dropdown-item" th:classappend="${activeLink == 'frontend/finduser' ? 'text-danger' : 'text-muted'}" th:href="@{/frontend/finduser}">Option 2</a></li>-->
+                                            <li><a class="dropdown-item" th:classappend="${activeLink == 'frontend/finduser' ? 'text-danger' : 'text-muted'}" th:href="@{/frontend/finduser}">Option 2</a></li>
                                         </ul>
                                     </li>
                                 </ul>
                             </div>
                         </div>
-                    </nav>
+                    </nav>-->
                     <!--                    </div>-->
                 </div>    
                 <div class="col-1 text-right"><img class="img-responsive" alt="Logo" th:src="@{${appLogo}}" src="" style="max-width:auto; height:75px;" /></div>
@@ -99,15 +100,15 @@
                 <div class="container-fluid">
                     <div class="row justify-content-between">
                         <div class="col-4 align-middle">
-                            <div sec:authorize="isAuthenticated()" th:remove="tag"><small class="font-weight-lighter">You are currently logged in as: <span id="authUserName" sec:authentication="name">username</span> (<a id="mnuLogout" th:href="@{/auth/logout}">Logout</a>)</small></div>
-                            <div sec:authorize="isAnonymous()" th:remove="tag"><small class="font-weight-lighter">You are not currently logged in.(<a id="mnuLogin" th:href="@{/auth/login}">Login</a>)</small></div>
+                            <div sec:authorize="isAuthenticated()" th:remove="tag"><small class="font-weight-lighter">You are currently logged in as <span id="authUserName" sec:authentication="name">username</span> (<a id="mnuLogout" th:href="@{/auth/logout}">Logout</a>)</small></div>
+                            <div sec:authorize="isAnonymous()" th:remove="tag"><small class="font-weight-lighter">You are not currently logged in (<a id="mnuLogin" th:href="@{/auth/login}">Login</a>)</small></div>
                         </div>
                         <div class="col-4 text-center align-middle"><small class="font-weight-lighter" th:text="${appver}"></small></div>
-                        <div class="col-4 text-right align-middle"><small class="font-weight-lighter"><div th:remove="tag" th:text="${copyright}">&copy;</div></small></div>
+                        <div class="col-4 text-end align-middle"><small class="font-weight-lighter"><div th:remove="tag" th:text="${copyright}">&copy;</div></small></div>
                     </div>
                 </div>
             </div>
-            <div th:replace="segments/scripts:: footer" th:remove="tag">Scripts</div>
+            <div th:replace="~{segments/scripts:: footer}" th:remove="tag">Scripts</div>
 
         </div>
 

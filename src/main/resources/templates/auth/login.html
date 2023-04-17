@@ -21,7 +21,7 @@
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-        <meta th:replace="segments/scripts :: header" th:remove="tag"></meta>
+        <div th:replace="~{segments/scripts :: header}" th:remove="tag"></div>
         <title th:text="${pagetitle}"></title>
 
     </head>
@@ -47,7 +47,7 @@
 
 
         <div class="container-fluid" sec:authorize="isAnonymous()">
-            <div th:replace="segments/header :: header" th:remove="tag"></div>
+            <div th:replace="~{segments/header :: header}" ></div>
             <div class="row">&nbsp;</div>                  
             <div class="row justify-content-center">        
                 <div class="col-6 text-center">
@@ -71,7 +71,7 @@
                 </div>
             </div>
 
-            <div th:replace="segments/header :: footer" th:remove="tag"></div>
+            <div th:replace="~{segments/header :: footer}" th:remove="tag"></div>
         </div>
 
     </body>

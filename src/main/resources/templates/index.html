@@ -22,23 +22,24 @@
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-        <meta th:replace="segments/scripts :: header" th:remove="tag"></meta>
+        <div th:replace="~{segments/scripts :: header}" th:remove="tag"></div>
         <title th:text="${pagetitle}"></title>
     </head>
     <body>
         <div class="container-fluid">
-            <div th:replace="segments/header :: header" ></div>
-
-            <div class="row justify-content-left">
-                <div class="col-8 text-left"><h3>Genesys Cloud License Management</h3></div>
+            <div th:replace="~{segments/header :: header}" ></div>
+            <div sec:authorize="isAuthenticated()">
+                <div class="row justify-content-center">
+                    <div class="col-8 text-left">Please select a function from the menu above.</div>
+                </div>
             </div>
-            <div class="row">&nbsp;</div>
-            <div class="row justify-content-left">
-                <div class="col-8 text-left">Please select a function from the menu above.</h2></div>
+            <div sec:authorize="isAnonymous()">
+                <div class="row justify-content-center">
+                    <div class="col-8 text-center">You are not logged in. Please log in <a th:href="@{/auth/login}">here</a></div>
+                </div>
             </div>
-
-
-            <div th:replace="segments/header :: footer" th:remove="tag"></div>
+            
+            <div th:replace="~{segments/header :: footer}" th:remove="tag"></div>
         </div>
     </body>
 </html>

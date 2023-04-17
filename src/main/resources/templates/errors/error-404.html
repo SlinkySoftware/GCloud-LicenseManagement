@@ -23,18 +23,19 @@
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-        <div th:replace="segments/scripts :: header" th:remove="tag"></div>
+        <div th:replace="~{segments/scripts :: header}" th:remove="tag"></div>
         <title th:text="${pagetitle}"></title>
     </head>
     <body>
         <div class="container-fluid">
-            <div th:replace="segments/header :: header" >Header</div>
+            <div th:replace="~{segments/header :: header}" ></div>
 
             <div class="alert alert-danger mx-3" role="alert">
                 Error: Page not found. Please check the link you have used and ensure it is valid.
             </div>
-            
-            <div th:replace="segments/header :: footer">Footer</div>
+
+            <div th:replace="~{segments/header :: footer}" th:remove="tag"></div>
+
         </div>
     </body>
 </html>

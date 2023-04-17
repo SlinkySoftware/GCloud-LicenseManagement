@@ -25,6 +25,7 @@ import java.security.cert.X509Certificate;
 import lombok.extern.slf4j.Slf4j;
 import org.opensaml.security.x509.X509Support;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.session.DefaultCookieSerializerCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -38,10 +39,12 @@ import org.springframework.security.saml2.provider.service.registration.RelyingP
 import org.springframework.security.saml2.provider.service.web.DefaultRelyingPartyRegistrationResolver;
 import org.springframework.security.saml2.provider.service.web.Saml2MetadataFilter;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.saml2.provider.service.metadata.OpenSamlMetadataResolver;
 import org.springframework.security.saml2.provider.service.web.RelyingPartyRegistrationResolver;
 import org.springframework.security.saml2.provider.service.web.authentication.Saml2WebSsoAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.session.ChangeSessionIdAuthenticationStrategy;
 
 /**
  *
@@ -86,11 +89,16 @@ public class SAMLAuthenticationConfiguration {
                 .csrf().disable().headers().frameOptions().disable()
                 .and()
                 .sessionManagement()
-                .sessionFixation()
-                .migrateSession()
+                .invalidSessionUrl("/?error=is")
+                .sessionCreationPolicy(SessionCreationPolicy.ALWAYS)
+                .sessionAuthenticationStrategy(new ChangeSessionIdAuthenticationStrategy())
+                .sessionAuthenticationErrorUrl("/?error=se")
                 .and()
                 .logout()
-                .invalidateHttpSession(false);
+                .invalidateHttpSession(true)
+                .clearAuthentication(true)
+                .logoutSuccessUrl("/?error=lo")
+                .permitAll();
         log.trace("{}HTTP Security: {}", logPrefix, http);
         RelyingPartyRegistrationResolver relyingPartyRegistrationResolver = new DefaultRelyingPartyRegistrationResolver(relyingPartyRegistrations());
         log.trace("{}RelyingPartyRegistrationResolver: {}", logPrefix, relyingPartyRegistrationResolver);
@@ -147,4 +155,10 @@ public class SAMLAuthenticationConfiguration {
         return new InMemoryRelyingPartyRegistrationRepository(registration);
     }
 
+    @Bean
+    public DefaultCookieSerializerCustomizer cookieSerializerCustomizer() {
+        return cookieSerializer -> {
+            cookieSerializer.setSameSite(null);
+        };
+    }
 }
