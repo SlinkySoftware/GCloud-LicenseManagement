@@ -23,12 +23,14 @@ import com.slinkytoybox.gcloud.licensing.businesslogic.LicenseManagement;
 import com.slinkytoybox.gcloud.licensing.dto.response.*;
 import com.slinkytoybox.gcloud.licensing.security.roles.RoleUser;
 import java.security.Principal;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  *
@@ -43,14 +45,44 @@ public class ApiController {
     @Autowired
     private LicenseManagement licMgmt;
 
-    @GetMapping("/myLicenses")
+    @PostMapping(path = "/myLicenses", produces = "application/json")
     public ResponseEntity<UserLicenseResponse> getMyLicenses(Principal principal) {
         final String logPrefix = "getMyLicenses() - ";
         log.trace("{}Entering Method", logPrefix);
         log.info("{}Processing GET for /myLicenses for {}", logPrefix, principal.getName());
         UserLicenseResponse response = new UserLicenseResponse();
-        response.setAvailablePlatforms(licMgmt.getUserPlatforms(principal.getName()));
-        response.setCurrentLicenses(licMgmt.getUserLicenses(principal.getName()));
+        List<PlatformDTO> platforms = licMgmt.getUserPlatforms(principal.getName());
+        Map<Long, LicenseDTO> licenses = licMgmt.getUserLicenses(principal.getName());
+
+        List<UserLicenseResponse.LicenseResponse> licResp = new ArrayList<>();
+
+        for (PlatformDTO plat : platforms) {
+            UserLicenseResponse.LicenseResponse row = new UserLicenseResponse.LicenseResponse()
+                    .setCloudPlatformId(plat.getId())
+                    .setPlatformName(plat.getName())
+                    .setOrganisationName(plat.getOrganisationName())
+                    .setOrganisationId(plat.getOrganisationId());
+            if (licenses.containsKey(plat.getId())) {
+                LicenseDTO lic = licenses.get(plat.getId());
+                row.setLicenseAllocated(true)
+                        .setExpiryDate(lic.getExpiryDate())
+                        .setIssueDate(lic.getIssueDate())
+                        .setUpn(lic.getUpn())
+                        .setLicenseId(lic.getId());
+            }
+            else {
+                row.setLicenseAllocated(false)
+                        .setExpiryDate(null)
+                        .setIssueDate(null)
+                        .setUpn(null)
+                        .setLicenseId(null);
+
+            }
+            licResp.add(row);
+            log.trace("{}Added license row: {}", logPrefix, row);
+        }
+        Collections.sort(licResp);
+        response.setLicenseResponse(licResp);
         return ResponseEntity.ok().body(response);
 
     }

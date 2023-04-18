@@ -37,7 +37,7 @@ import org.springframework.stereotype.Component;
  *
  * @author Michael Junek (michael@juneks.com.au)
  */
-@Component
+//@Component
 @Slf4j
 public class GCloudAPIConnection {
 

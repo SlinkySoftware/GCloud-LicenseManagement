@@ -32,6 +32,8 @@ import lombok.experimental.Accessors;
 public class PlatformDTO implements Serializable {
 
     private Long id;
-    private String name, organisationName, organisationId;
+    private String name;
+    private String organisationName;
+    private String organisationId;
 
 }

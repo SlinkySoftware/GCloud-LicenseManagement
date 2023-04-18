@@ -20,16 +20,15 @@
 package com.slinkytoybox.gcloud.licensing.businesslogic;
 
 import com.slinkytoybox.gcloud.licensing.connection.CloudDatabaseConnection;
-import com.slinkytoybox.gcloud.licensing.connection.GCloudAPIConnection;
 import com.slinkytoybox.gcloud.licensing.dto.response.*;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -45,16 +44,14 @@ public class LicenseManagement {
     @Autowired
     private CloudDatabaseConnection cdc;
 
-    @Autowired
-    private GCloudAPIConnection gcApi;
-
     //TODO:
     // Create new license
     // Check license available
     // Extend license
-
+    
+    
     // Get existing license from database
-    public List<LicenseDTO> getUserLicenses (String upn) {
+    public Map<Long, LicenseDTO> getUserLicenses(String upn) {
         final String logPrefix = "getUserLicenses() - ";
         log.trace("{}Entering Method", logPrefix);
 
@@ -63,7 +60,7 @@ public class LicenseManagement {
             throw new IllegalArgumentException("UPN cannot be null or empty");
         }
 
-        List<LicenseDTO> licenses = new ArrayList<>();
+        Map<Long, LicenseDTO> licenses = new HashMap<>();
 
         log.info("{}Looking up existing licenses for {}", logPrefix, upn);
         String platformSql = "SELECT LIC.Id, LIC.LicenseIssueDateTime, LIC.LicenseExpiryDateTime, U.UPN, LIC.CloudPlatformID FROM LIC_ISSUED_LICENSE LIC"
@@ -77,12 +74,11 @@ public class LicenseManagement {
                         LicenseDTO dto = new LicenseDTO()
                                 .setId(rs.getLong("Id"))
                                 .setCloudPlatformId(rs.getLong("CloudPlatformId"))
-                                .setExpirtyDate(rs.getTimestamp("LicenseIssueDateTime").toLocalDateTime())
+                                .setExpiryDate(rs.getTimestamp("LicenseIssueDateTime").toLocalDateTime())
                                 .setIssueDate(rs.getTimestamp("LicenseExpiryDateTime").toLocalDateTime())
-                                .setUpn(upn)
-                                ;
+                                .setUpn(upn);
                         log.debug("{}Got a license {}", logPrefix, dto);
-                        licenses.add(dto);
+                        licenses.put(rs.getLong("CloudPlatformId"), dto);
                     }
                 }
             }
@@ -92,10 +88,9 @@ public class LicenseManagement {
         }
         log.info("{}Found a total of {} issued licenses for user {}", logPrefix, licenses.size(), upn);
         return licenses;
-    
+
     }
 
-    
     // Get User Platforms
     public List<PlatformDTO> getUserPlatforms(String upn) {
         final String logPrefix = "getUserPlatforms() - ";

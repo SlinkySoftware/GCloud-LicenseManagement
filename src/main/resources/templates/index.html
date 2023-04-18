@@ -29,17 +29,31 @@
         <div class="container-fluid">
             <div th:replace="~{segments/header :: header}" ></div>
             <div sec:authorize="isAuthenticated()">
-                <div class="row justify-content-center">
-                    <div class="col-8 text-left">Please select a function from the menu above.</div>
+                <div class="row">
+
+                    <div class="col-17 text-left">
+                        <table class="table table-bordered" id="licenseTable">
+                            <thead>
+                                <tr>
+                                    <th>Platform</th>
+                                    <th>License Issued?</th>
+                                    <th>Issue Date</th>
+                                    <th>Expiry Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
                 </div>
             </div>
             <div sec:authorize="isAnonymous()">
-                <div class="row justify-content-center">
-                    <div class="col-8 text-center">You are not logged in. Please log in <a th:href="@{/auth/login}">here</a></div>
+                <div class="row">
+                    <div class="col-12">You are not logged in. Please log in <a th:href="@{/auth/login}">here</a></div>
                 </div>
             </div>
-            
+
             <div th:replace="~{segments/header :: footer}" th:remove="tag"></div>
         </div>
+        <script th:src="@{/assets/js/license.js}"></script>
     </body>
 </html>

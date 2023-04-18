@@ -34,7 +34,7 @@ public class LicenseDTO implements Serializable {
     
     private Long id;
     private LocalDateTime issueDate;
-    private LocalDateTime expirtyDate;
+    private LocalDateTime expiryDate;
     private String upn;
     private Long cloudPlatformId;
     
