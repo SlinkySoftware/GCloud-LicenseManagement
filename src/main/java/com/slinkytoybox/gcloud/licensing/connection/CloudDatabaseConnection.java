@@ -17,7 +17,7 @@
  *   AGPL-3.0.md supplied with the source code.
  *
  */
-package com.slinkytoybox.gcloud.licensing.apiconnection;
+package com.slinkytoybox.gcloud.licensing.connection;
 
 import com.zaxxer.hikari.HikariDataSource;
 import jakarta.annotation.PostConstruct;
@@ -75,7 +75,7 @@ public class CloudDatabaseConnection {
         final String logPrefix = "startDatabase() - ";
         log.trace("{}Entering Method", logPrefix);
 
-        if (jdbcUrl.equalsIgnoreCase("NOT_SET") || jdbcUrl.equalsIgnoreCase("NOT_SET") || jdbcUrl.equalsIgnoreCase("NOT_SET")) {
+        if (jdbcUrl.equalsIgnoreCase("NOT_SET") || jdbcUser.equalsIgnoreCase("NOT_SET") || jdbcPassword.equalsIgnoreCase("NOT_SET")) {
             log.error("{}JDBC Connection paramaters 'cloud.database.url|username|password' are not defined correctly", logPrefix);
             throw new IllegalArgumentException("JDBC Connection paramaters 'cloud.database.url|username|password' are not defined correctly");
         }

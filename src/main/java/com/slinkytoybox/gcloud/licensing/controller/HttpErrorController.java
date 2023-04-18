@@ -54,16 +54,16 @@ public class HttpErrorController implements ErrorController {
 
     @Value("${info.build.name}")
     String buildName;
-
+    
     @Value("${info.build.version}")
     String buildVersion;
 
-    @Value("${company.logo}")
-    String companyLogo;
+    @Value("${app.logo}")
+    String appLogo;
 
     @Autowired
     private ErrorAttributes errorAttributes;
-
+    
     @RequestMapping(value = "/error", produces = "text/html")
     public ModelAndView errorHtml(WebRequest request) {
         final String logPrefix = "errorHtml() - ";
@@ -73,9 +73,9 @@ public class HttpErrorController implements ErrorController {
         final String appVer = buildName + " v" + buildVersion;
 
         Map<String, Object> body = getErrorAttributes(request);
-
+        
         body.put("pagetitle", appName + " / " + pageTitle + " (" + companyName + ")");
-        body.put("companylogo", companyLogo);
+        body.put("appLogo", appLogo);
         body.put("appname", appName);
         body.put("copyright", appCopyright);
         body.put("pageheader", pageTitle);

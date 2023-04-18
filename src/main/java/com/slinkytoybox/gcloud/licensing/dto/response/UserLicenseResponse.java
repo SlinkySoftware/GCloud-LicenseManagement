@@ -1,5 +1,5 @@
 /*
- *   gcloudlicensing - Role2.java
+ *   gcloudlicensemanagement - UserLicenseResponse.java
  *
  *   Copyright (c) 2022-2023, Slinky Software
  *
@@ -17,21 +17,21 @@
  *   AGPL-3.0.md supplied with the source code.
  *
  */
-package com.slinkytoybox.gcloud.licensing.security.roles;
+package com.slinkytoybox.gcloud.licensing.dto.response;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import org.springframework.security.access.prepost.PreAuthorize;
+import java.io.Serializable;
+import java.util.List;
+import lombok.Data;
+import lombok.experimental.Accessors;
 
 /**
  *
  * @author Michael Junek (michael@juneks.com.au)
  */
-@Target({ElementType.METHOD, ElementType.TYPE})
-@Retention(RetentionPolicy.RUNTIME)
-@PreAuthorize("hasRole('ROLE2')")
-public @interface Role2 {
+@Data
+@Accessors(chain = true)
+public class UserLicenseResponse implements Serializable {
     
+    private List<PlatformDTO> availablePlatforms;
+    private List<LicenseDTO> currentLicenses;
 }

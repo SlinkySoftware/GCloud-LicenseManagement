@@ -17,7 +17,7 @@
  *   AGPL-3.0.md supplied with the source code.
  *
  */
-package com.slinkytoybox.gcloud.licensing.apiconnection;
+package com.slinkytoybox.gcloud.licensing.connection;
 
 import com.mypurecloud.sdk.v2.*;
 import com.mypurecloud.sdk.v2.extensions.AuthResponse;
@@ -42,7 +42,7 @@ import org.springframework.stereotype.Component;
 public class GCloudAPIConnection {
 
     private final Map<Long, CloudPlatform> cloudPlatforms = new HashMap<>();
-    private final static String USER_AGENT = "GCloud-License-Management";
+    private static final String USER_AGENT = "GCloud-License-Management";
     private final CloudDatabaseConnection dbConn;
 
     @Value("${genesys.cloud.api-timeout:5000}")

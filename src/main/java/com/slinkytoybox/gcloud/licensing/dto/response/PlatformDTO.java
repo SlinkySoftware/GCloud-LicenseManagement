@@ -1,5 +1,5 @@
 /*
- *   gcloudlicensing - Role3.java
+ *   gcloudlicensemanagement - PlatformDTO.java
  *
  *   Copyright (c) 2022-2023, Slinky Software
  *
@@ -17,21 +17,21 @@
  *   AGPL-3.0.md supplied with the source code.
  *
  */
-package com.slinkytoybox.gcloud.licensing.security.roles;
+package com.slinkytoybox.gcloud.licensing.dto.response;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import org.springframework.security.access.prepost.PreAuthorize;
+import java.io.Serializable;
+import lombok.Data;
+import lombok.experimental.Accessors;
 
 /**
  *
  * @author Michael Junek (michael@juneks.com.au)
  */
-@Target({ElementType.METHOD, ElementType.TYPE})
-@Retention(RetentionPolicy.RUNTIME)
-@PreAuthorize("hasRole('ROLE3')")
-public @interface Role3 {
-    
+@Data
+@Accessors(chain = true)
+public class PlatformDTO implements Serializable {
+
+    private Long id;
+    private String name, organisationName, organisationId;
+
 }

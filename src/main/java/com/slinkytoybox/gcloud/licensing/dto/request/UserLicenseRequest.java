@@ -1,5 +1,5 @@
 /*
- *   gcloudlicensing - RoleAdmin.java
+ *   gcloudlicensemanagement - UserLicenseRequest.java
  *
  *   Copyright (c) 2022-2023, Slinky Software
  *
@@ -17,21 +17,16 @@
  *   AGPL-3.0.md supplied with the source code.
  *
  */
-package com.slinkytoybox.gcloud.licensing.security.roles;
+package com.slinkytoybox.gcloud.licensing.dto.request;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import org.springframework.security.access.prepost.PreAuthorize;
+import java.io.Serializable;
+import lombok.Data;
 
 /**
  *
  * @author Michael Junek (michael@juneks.com.au)
  */
-@Target({ElementType.METHOD, ElementType.TYPE})
-@Retention(RetentionPolicy.RUNTIME)
-@PreAuthorize("hasRole('ADMIN')")
-public @interface RoleAdmin {
+@Data
+public class UserLicenseRequest implements Serializable {
     
 }

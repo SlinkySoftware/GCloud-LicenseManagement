@@ -57,14 +57,14 @@ import org.springframework.security.web.authentication.session.ChangeSessionIdAu
 
 public class SAMLAuthenticationConfiguration {
 
-    @Autowired
-    private Environment env;
+//    @Autowired
+//    private Environment env;
 
-    @Autowired
-    private SAMLLoginSettings samlSettings;
+//    @Autowired
+//    private SAMLLoginSettings samlSettings;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, SAMLLoginSettings samlSettings,  Environment env) throws Exception {
         final String logPrefix = "securityFilterChain(HttpSecurity) - ";
         log.trace("{}Entering method", logPrefix);
         http
@@ -100,7 +100,7 @@ public class SAMLAuthenticationConfiguration {
                 .logoutSuccessUrl("/?error=lo")
                 .permitAll();
         log.trace("{}HTTP Security: {}", logPrefix, http);
-        RelyingPartyRegistrationResolver relyingPartyRegistrationResolver = new DefaultRelyingPartyRegistrationResolver(relyingPartyRegistrations());
+        RelyingPartyRegistrationResolver relyingPartyRegistrationResolver = new DefaultRelyingPartyRegistrationResolver(relyingPartyRegistrations(env));
         log.trace("{}RelyingPartyRegistrationResolver: {}", logPrefix, relyingPartyRegistrationResolver);
 
         Saml2MetadataFilter filter = new Saml2MetadataFilter(relyingPartyRegistrationResolver, new OpenSamlMetadataResolver());
@@ -113,7 +113,7 @@ public class SAMLAuthenticationConfiguration {
     }
 
     @Bean
-    protected RelyingPartyRegistrationRepository relyingPartyRegistrations() throws Exception {
+    protected RelyingPartyRegistrationRepository relyingPartyRegistrations(Environment env) throws Exception {
         final String logPrefix = "relyingPartyRegistrations() - ";
         log.trace("{}Entering method", logPrefix);
         String ssoUrl = env.getProperty("auth.saml.sso.url");
@@ -157,8 +157,6 @@ public class SAMLAuthenticationConfiguration {
 
     @Bean
     public DefaultCookieSerializerCustomizer cookieSerializerCustomizer() {
-        return cookieSerializer -> {
-            cookieSerializer.setSameSite(null);
-        };
+        return cookieSerializer -> cookieSerializer.setSameSite(null);
     }
 }

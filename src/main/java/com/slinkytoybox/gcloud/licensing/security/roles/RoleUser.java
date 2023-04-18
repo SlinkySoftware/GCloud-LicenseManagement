@@ -1,5 +1,6 @@
 /*
- *   gcloudlicensing - SpringApplicationInitialisation.java
+ *   gcloudlicensing - RoleUser.java
+ *
  *   Copyright (c) 2022-2023, Slinky Software
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -16,28 +17,21 @@
  *   AGPL-3.0.md supplied with the source code.
  *
  */
-package com.slinkytoybox.gcloud.licensing.init;          
+package com.slinkytoybox.gcloud.licensing.security.roles;
 
-import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 /**
  *
  * @author Michael Junek (michael@juneks.com.au)
  */
-public class SpringApplicationInitialisation extends AbstractAnnotationConfigDispatcherServletInitializer {
-
-    @Override
-    protected Class<?>[] getRootConfigClasses() {
-        return new Class<?>[0];
-    }
-
-    @Override
-    protected Class<?>[] getServletConfigClasses() {
-        return new Class[]{SpringWebConfig.class};
-    }
-
-    @Override
-    protected String[] getServletMappings() {
-        return new String[]{"/"};
-    }
+@Target({ElementType.METHOD, ElementType.TYPE})
+@Retention(RetentionPolicy.RUNTIME)
+@PreAuthorize("hasRole ('USER')")
+public @interface RoleUser {
+    
 }
