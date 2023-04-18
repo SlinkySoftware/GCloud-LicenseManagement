@@ -25,12 +25,14 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /**
@@ -74,9 +76,10 @@ public class LicenseManagement {
                         LicenseDTO dto = new LicenseDTO()
                                 .setId(rs.getLong("Id"))
                                 .setCloudPlatformId(rs.getLong("CloudPlatformId"))
-                                .setExpiryDate(rs.getTimestamp("LicenseIssueDateTime").toLocalDateTime())
-                                .setIssueDate(rs.getTimestamp("LicenseExpiryDateTime").toLocalDateTime())
+                                .setExpiryDate(rs.getTimestamp("LicenseExpiryDateTime").toLocalDateTime())
+                                .setIssueDate(rs.getTimestamp("LicenseIssueDateTime").toLocalDateTime())
                                 .setUpn(upn);
+                          
                         log.debug("{}Got a license {}", logPrefix, dto);
                         licenses.put(rs.getLong("CloudPlatformId"), dto);
                     }

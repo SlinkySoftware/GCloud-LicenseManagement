@@ -21,7 +21,6 @@ package com.slinkytoybox.gcloud.licensing.dto.response;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Comparator;
 import java.util.List;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -35,10 +34,10 @@ import lombok.experimental.Accessors;
 public class UserLicenseResponse implements Serializable {
 
     private List<LicenseResponse> licenseResponse;
-    
+
     @Data
     @Accessors(chain = true)
-    public static class LicenseResponse implements Comparable<LicenseResponse>, Serializable{
+    public static class LicenseResponse implements Comparable<LicenseResponse>, Serializable {
 
         private Long cloudPlatformId;
         private String platformName;
@@ -49,15 +48,13 @@ public class UserLicenseResponse implements Serializable {
         private String upn;
         private boolean licenseAllocated;
         private Long licenseId;
+        private boolean canExtend;
+        private boolean expired;
 
         @Override
         public int compareTo(LicenseResponse o1) {
             return this.platformName.compareToIgnoreCase(o1.platformName);
         }
-        
-  
-        
-        
 
     }
 }

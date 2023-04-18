@@ -23,12 +23,14 @@ import com.slinkytoybox.gcloud.licensing.businesslogic.LicenseManagement;
 import com.slinkytoybox.gcloud.licensing.dto.response.*;
 import com.slinkytoybox.gcloud.licensing.security.roles.RoleUser;
 import java.security.Principal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -44,6 +46,9 @@ public class ApiController {
 
     @Autowired
     private LicenseManagement licMgmt;
+
+    @Value("${license.extend-time:7200}")
+    private Long canExtendTime;
 
     @PostMapping(path = "/myLicenses", produces = "application/json")
     public ResponseEntity<UserLicenseResponse> getMyLicenses(Principal principal) {
@@ -68,7 +73,10 @@ public class ApiController {
                         .setExpiryDate(lic.getExpiryDate())
                         .setIssueDate(lic.getIssueDate())
                         .setUpn(lic.getUpn())
-                        .setLicenseId(lic.getId());
+                        .setLicenseId(lic.getId())
+                        .setCanExtend(lic.getExpiryDate().isBefore(LocalDateTime.now().plusSeconds(canExtendTime)))
+                        .setExpired(lic.getExpiryDate().isBefore(LocalDateTime.now()));
+                        ;
             }
             else {
                 row.setLicenseAllocated(false)

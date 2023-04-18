@@ -29,9 +29,9 @@
         <div class="container-fluid">
             <div th:replace="~{segments/header :: header}" ></div>
             <div sec:authorize="isAuthenticated()">
+                <div class="row"><div class="col-12"><h4>My Licenses</h4></div></div>
                 <div class="row">
-
-                    <div class="col-17 text-left">
+                    <div class="col-12 text-left">
                         <table class="table table-bordered" id="licenseTable">
                             <thead>
                                 <tr>
