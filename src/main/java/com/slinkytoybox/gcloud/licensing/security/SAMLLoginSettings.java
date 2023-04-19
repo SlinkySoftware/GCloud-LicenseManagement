@@ -54,20 +54,20 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 public class SAMLLoginSettings implements Customizer<Saml2LoginConfigurer<HttpSecurity>> {
-    
+
     private final Map<String, String> roleMap = new HashMap<>();
-    
+
     @Autowired
     private SAMLConfigurationProperties samlProps;
-    
+
     @Autowired
     private Environment env;
-    
+
     @Override
     public void customize(Saml2LoginConfigurer<HttpSecurity> t) {
         final String logPrefix = "customize() - ";
         log.trace("{}Entering method", logPrefix);
-        
+
         t.successHandler(new SavedRequestAwareAuthenticationSuccessHandler() {
             @Override
             public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
@@ -78,24 +78,24 @@ public class SAMLLoginSettings implements Customizer<Saml2LoginConfigurer<HttpSe
 
         t.loginPage("/auth/login");
         log.trace("{}Leaving method", logPrefix);
-        
+
     }
-    
+
     private Authentication assignAuthorities(Authentication authentication) {
         final String logPrefix = "assignAuthorities() - ";
         log.trace("{}Entering method", logPrefix);
         String groupAttribute = env.getProperty("auth.saml.group-attribute", "http://schemas.microsoft.com/ws/2008/06/identity/claims/role");
-        
+
         DefaultSaml2AuthenticatedPrincipal princ = (DefaultSaml2AuthenticatedPrincipal) authentication.getPrincipal();
         log.trace("{}Principal: {}", logPrefix, princ);
-        
+
         if (princ.getAttribute(groupAttribute) != null) {
             log.trace("{}Found Attribute '{}'", logPrefix, groupAttribute);
             List<String> groups = princ.getAttribute(groupAttribute);
             log.info("{}External groups: {}", logPrefix, groups);
-            
+
             List<SimpleGrantedAuthority> updatedAuthorities = new ArrayList<>();
-            
+
             log.trace("{}Adding new roles", logPrefix);
             if (groups != null) {
                 for (String group : groups) {
@@ -107,7 +107,7 @@ public class SAMLLoginSettings implements Customizer<Saml2LoginConfigurer<HttpSe
                     }
                 }
             }
-            
+
             Saml2Authentication sAuth = (Saml2Authentication) authentication;
             sAuth = new Saml2Authentication(
                     (AuthenticatedPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal(),
@@ -123,34 +123,32 @@ public class SAMLLoginSettings implements Customizer<Saml2LoginConfigurer<HttpSe
             return authentication;
         }
     }
-    
+
     @PostConstruct
     private void setRoles() {
         final String logPrefix = "setRoles() - ";
         log.trace("{}Entering method", logPrefix);
         roleMap.clear();
         log.debug("{}Setting up group to role mapping", logPrefix);
-        
+
         samlProps.getGroupMapping().forEach((role, group) -> {
             log.info("{}Group {} maps to role {}", logPrefix, group, role);
             roleMap.put(group, role);
         });
         log.debug("{}RoleMap: {}", logPrefix, roleMap);
         log.trace("{}Leaving method", logPrefix);
-        
+
     }
-    
+
     @Bean
     public RoleHierarchy roleHierarchy() {
         RoleHierarchyImpl roleHierarchy = new RoleHierarchyImpl();
         String hierarchy = "";
-//        hierarchy += "ROLE4 > ROLE3 \n";
-//        hierarchy += "ROLE4 > ROLE2 \n";
-//        hierarchy += "ROLE4 > ROLE1 \n";
+//        We do not need a heirarchy here, but we can add it in by doing something like this -> hierarchy += "ROLE4 > ROLE1 \n";
         roleHierarchy.setHierarchy(hierarchy);
         return roleHierarchy;
     }
-    
+
     @Bean
     public DefaultWebSecurityExpressionHandler webSecurityExpressionHandler() {
         DefaultWebSecurityExpressionHandler expressionHandler = new DefaultWebSecurityExpressionHandler();

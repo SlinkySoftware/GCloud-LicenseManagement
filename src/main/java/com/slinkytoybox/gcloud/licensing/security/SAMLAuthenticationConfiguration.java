@@ -1,4 +1,3 @@
-//TODO: Clean up this defaults to work with Spring v6 Changes.
 /*
  *   gcloudlicensing - SAMLAuthenticationConfiguration.java
  *
@@ -24,7 +23,6 @@ import java.io.File;
 import java.security.cert.X509Certificate;
 import lombok.extern.slf4j.Slf4j;
 import org.opensaml.security.x509.X509Support;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.session.DefaultCookieSerializerCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -35,7 +33,6 @@ import org.springframework.security.saml2.core.Saml2X509Credential;
 import org.springframework.security.saml2.provider.service.registration.InMemoryRelyingPartyRegistrationRepository;
 import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistration;
 import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistrationRepository;
-
 import org.springframework.security.saml2.provider.service.web.DefaultRelyingPartyRegistrationResolver;
 import org.springframework.security.saml2.provider.service.web.Saml2MetadataFilter;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -56,12 +53,6 @@ import org.springframework.security.web.authentication.session.ChangeSessionIdAu
 @Slf4j
 
 public class SAMLAuthenticationConfiguration {
-
-//    @Autowired
-//    private Environment env;
-
-//    @Autowired
-//    private SAMLLoginSettings samlSettings;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, SAMLLoginSettings samlSettings,  Environment env) throws Exception {

@@ -75,7 +75,7 @@ public class ApiController {
                         .setUpn(lic.getUpn())
                         .setLicenseId(lic.getId())
                         .setCanExtend(lic.getExpiryDate().isBefore(LocalDateTime.now().plusSeconds(canExtendTime)))
-                        .setExpired(lic.getExpiryDate().isBefore(LocalDateTime.now()));
+                        .setExpired(lic.getExpiryDate().isBefore(LocalDateTime.now()))
                         ;
             }
             else {

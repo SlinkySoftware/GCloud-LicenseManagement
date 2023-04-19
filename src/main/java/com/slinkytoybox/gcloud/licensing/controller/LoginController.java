@@ -38,9 +38,6 @@ import org.springframework.web.context.request.WebRequest;
 @RequestMapping("/auth")
 public class LoginController {
 
-//    @Autowired
-//    private ModelDefaults modelDefaults;
-//    
     @Autowired
     private Environment env;
 
@@ -51,28 +48,6 @@ public class LoginController {
         log.info("{}Processing /auth/login request", logPrefix);
         String registrationId = env.getProperty("auth.saml.registration-id", "none");
         return "redirect:/saml2/authenticate/" + registrationId;
-
-// TODO: Clean up this code as we dont present a login screen anymore
-//        final String pageTitle = "Login";
-//        if (request == null || request.getParameter("error") == null || request.getParameter("error").isEmpty()) {
-//            model.addAttribute("showError", 0);
-//        }
-//        else {
-//            model.addAttribute("showError", 1);
-//            model.addAttribute("errorText", "Your login was unsuccessful. Please try again");
-//        }
-//
-//        if (request != null && request.getParameter("logout") != null) {
-//            model.addAttribute("showSuccess", 1);
-//            model.addAttribute("successText", "You have been successfully logged out.");
-//
-//        }
-//        String authType = env.getProperty("auth.saml.provider", "none");
-//
-//        model.addAttribute("authlogo", "/assets/images/" + authType + "-logo.png");
-//        model.addAttribute("authurl", "/saml2/authenticate/" + registrationId);
-//        modelDefaults.updateModelDefaults(model, pageTitle, "none", "Login", "/auth/login");
-//        return "auth/login";
     }
 
     @RequestMapping("/logout")
