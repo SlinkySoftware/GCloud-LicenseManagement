@@ -127,7 +127,7 @@ let licenseTable = $('#licenseTable').DataTable({
 function loadPlatform(organisationId) {
     if (debug)
         console.log("Logging in to platform", organisationId);
-    window.open('https://login.mypurecloud.com.au/#/authenticate-adv/org/' + organisationId, '_blank');
+    window.open('https://login.mypurecloud.com.au/#/authenticate-adv/org/' + organisationId + "?provider=adfs", '_blank');
 }
 
 

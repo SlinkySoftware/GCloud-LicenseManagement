@@ -34,13 +34,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MapPropertySource;
 import org.springframework.core.env.MutablePropertySources;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 /**
  *
  * @author Michael Junek (michael@juneks.com.au)
  */
-@Component
+@Service("CloudDatabaseConnection")
 @Slf4j
 public class CloudDatabaseConnection {
 
