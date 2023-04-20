@@ -43,9 +43,6 @@ import org.springframework.web.servlet.ModelAndView;
 @Slf4j
 public class HttpErrorController implements ErrorController {
 
-    @Value("${company.name}")
-    String companyName;
-
     @Value("${app.name}")
     String appName;
 
@@ -74,7 +71,7 @@ public class HttpErrorController implements ErrorController {
 
         Map<String, Object> body = getErrorAttributes(request);
         
-        body.put("pagetitle", appName + " / " + pageTitle + " (" + companyName + ")");
+        body.put("pagetitle", appName + " / " + pageTitle);
         body.put("appLogo", appLogo);
         body.put("appname", appName);
         body.put("copyright", appCopyright);

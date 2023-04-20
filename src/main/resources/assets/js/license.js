@@ -22,7 +22,6 @@ let debug = true;
 let ajaxBase = contextPath + 'api/v1/';
 if (debug)
     console.log("AJAX Base:", ajaxBase);
-
 let licenseTable = $('#licenseTable').DataTable({
     "autoWidth": false,
     "lengthChange": false,
@@ -56,18 +55,18 @@ let licenseTable = $('#licenseTable').DataTable({
             "render": function (data, type, row, meta) {
                 let buttonHtml = "";
                 if (debug)
-                    console.log("Rendering able row cell 4 for", row);
+                    console.log("Rendering able row cell 4 for data", data);
                 if (row.licenseAllocated) {
                     if (!row.expired) {
-                        buttonHtml += '<button data-mdb-ripple-color="dark" class="btn btn-outline-info" onclick="loadPlatform(\'' + row.organisationId + '\');"><span class="fas fa-right-to-bracket"></span> Log In</button>&nbsp;';
+                        buttonHtml += '<button class="btn btn-outline-info" onclick="loadPlatform(\'' + row.organisationId + '\');"><span class="fas fa-right-to-bracket"></span> Log In</button>&nbsp;';
                         if (row.canExtend) {
-                            buttonHtml += '<button data-mdb-ripple-color="dark" class="btn btn-outline-warning" onclick="extendLicense(\'' + data + '\');"><span class="fas fa-square-plus"></span> Extend</button>&nbsp;';
+                            buttonHtml += '<button class="btn btn-outline-warning" onclick="extendLicense(\'' + data + '\');"><span class="fas fa-square-plus"></span> Extend</button>&nbsp;';
                         }
                     }
-                    buttonHtml += '<button data-mdb-ripple-color="dark" class="btn btn-outline-danger" onclick="revokeLicense(\'' + data + '\');"><span class="fas fa-flag-checkered"></span> Return</button>';
+                    buttonHtml += '<button class="btn btn-outline-danger" onclick="revokeLicense(\'' + data + '\');"><span class="fas fa-flag-checkered"></span> Return</button>';
                 }
                 else {
-                    buttonHtml += '<button data-mdb-ripple-color="dark" class="btn btn-outline-success" onclick="allocateLicense(\'' + row.cloudPlatformId + '\');"><span class="fas fa-up-right-from-square"></span> Allocate License</button>';
+                    buttonHtml += '<button class="btn btn-outline-success" onclick="allocateLicense(\'' + row.cloudPlatformId + '\');"><span class="fas fa-up-right-from-square"></span> Allocate License</button>';
                 }
                 if (debug)
                     console.log("ButtonHTML", buttonHtml);
@@ -79,7 +78,7 @@ let licenseTable = $('#licenseTable').DataTable({
             "render": function (data, type, row, meta) {
                 let iconHtml = "";
                 if (debug)
-                    console.log("Rendering able row cell 1 for", row);
+                    console.log("Rendering able row cell 1 for data:", data);
                 if (data) {
                     iconHtml += '<span class="fas fa-circle-check text-success"></span>';
                 }
@@ -94,6 +93,10 @@ let licenseTable = $('#licenseTable').DataTable({
         {
             "targets": [2, 3],
             "render": function (data, type, row, meta) {
+                if (debug)
+                    console.log("Rendering able row cell 2/3 for data:", data);
+                if (data === null)
+                    return '';
                 return localDateTimeArrayToDDMMYYYY_HHMMSS(data, '-', ':', ' ');
             }
 
@@ -105,45 +108,88 @@ let licenseTable = $('#licenseTable').DataTable({
         $("td", row).addClass("align-middle");
         if (debug)
             console.log("RowCallback - row", row, "data", data, "index", index);
-
         if (data.expired === true) {
             if (debug)
                 console.log("Callback: Expired");
-
             $("td", row).eq(3).addClass("bg-danger bg-gradient text-white");
         }
         else if (data.canExtend === true) {
             if (debug)
                 console.log("Callback: Extend");
-
             $("td", row).eq(3).addClass("bg-warning bg-gradient text-white");
         }
     }
 });
 
 
-
-
 function loadPlatform(organisationId) {
     if (debug)
         console.log("Logging in to platform", organisationId);
-    window.open('https://login.mypurecloud.com.au/#/authenticate-adv/org/' + organisationId + "?provider=adfs", '_blank');
+    window.open('https://login.mypurecloud.com.au/#/authenticate-adv/org/' + organisationId, '_blank');
 }
 
 
 function extendLicense(licenseId) {
     if (debug)
         console.log("Extending license ID", licenseId);
+    if (debug)
+        console.log("Reloading license table");
+    licenseTable.ajax.reload();
+
 }
 
 
 function allocateLicense(platformId) {
     if (debug)
         console.log("Allocating license for platform", platformId);
+
+    let licenseRequest = {
+        "cloudPlatformId": platformId,
+        "licenseId": 0,
+        "requestType": "CREATE"
+    };
+
+    $.ajax({
+        url: ajaxBase + "newLicense",
+        method: "POST",
+        contentType: "application/json",
+        dataType: "json",
+        "data": JSON.stringify(licenseRequest),
+        success: function (responseData) {
+            console.log("AJAX finished - ResponseData:", responseData);
+            if (responseData.success) {
+                console.log("Success creating license");
+                $('#jsSuccessText').text("The license was allocated successfully.");
+                $('#jsSuccess').show();
+
+                console.log("Reloading license table");
+                licenseTable.ajax.reload();
+
+            }
+            else {
+                console.log("Error:", responseData.errorMessage);
+                $('#jsErrorText').text("An error was encountered whilst creating allocating a license.");
+                $('#jsError').show();
+
+            }
+
+
+
+        },
+        error: function (error) {
+            console.log("Error:", error);
+            $('#jsErrorText').text("An error was encountered whilst creating allocating a license.");
+            $('#jsError').show();
+        }
+    });
+
+
 }
 
 
 function revokeLicense(licenseId) {
-    if (debug)
-        console.log("Revoking license ID", licenseId);
+    console.log("Revoking license ID", licenseId);
+    console.log("Reloading license table");
+    licenseTable.ajax.reload();
+
 }

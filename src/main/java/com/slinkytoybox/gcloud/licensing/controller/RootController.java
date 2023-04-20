@@ -75,7 +75,7 @@ public class RootController {
         final String logPrefix = "index() - ";
         log.trace("{}Entering method", logPrefix);
 
-        final String pageTitle = "Main Menu";
+        final String pageTitle = "Licenses";
         final String viewTemplate = "index";
 
         modelDefaults.updateModelDefaults(model, pageTitle, NAVBAR_SEGMENT, SECTION_NAME, viewTemplate);

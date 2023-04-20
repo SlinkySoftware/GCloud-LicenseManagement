@@ -29,14 +29,14 @@
         <div class="container-fluid">
             <div th:replace="~{segments/header :: header}" ></div>
             <div sec:authorize="isAuthenticated()">
-                <div class="row"><div class="col-12"><h4>My Licenses</h4></div></div>
-                <div class="row">
-                    <div class="col-12 text-left">
-                        <table class="table table-bordered" id="licenseTable">
-                            <thead>
+                <div class="row justify-content-center"><div class="col-10"><h4>My Licenses</h4></div></div>
+                <div class="row justify-content-center">
+                    <div class="col-10 text-left">
+                        <table class="table table-borderless table-sm table-hover" id="licenseTable">
+                            <thead class="table-dark">
                                 <tr>
                                     <th>Platform</th>
-                                    <th>License Issued?</th>
+                                    <th>License?</th>
                                     <th>Issue Date</th>
                                     <th>Expiry Date</th>
                                     <th>Actions</th>
@@ -47,8 +47,8 @@
                 </div>
             </div>
             <div sec:authorize="isAnonymous()">
-                <div class="row">
-                    <div class="col-12">You are not logged in. Please log in <a th:href="@{/auth/login}">here</a></div>
+                <div class="row justify-content-center">
+                    <div class="col-10">You are not logged in. Please log in <a th:href="@{/auth/login}">here</a></div>
                 </div>
             </div>
 

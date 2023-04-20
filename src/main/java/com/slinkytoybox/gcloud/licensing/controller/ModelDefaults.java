@@ -19,9 +19,7 @@
  */
 package com.slinkytoybox.gcloud.licensing.controller;
 
-import jakarta.servlet.ServletContext;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.Model;
@@ -34,12 +32,6 @@ import org.springframework.ui.Model;
 @Component
 public class ModelDefaults {
     
-    @Autowired
-    ServletContext context;
-    
-    @Value("${company.name}")
-    String companyName;
-
     @Value("${app.name}")
     String appName;
 
@@ -62,7 +54,7 @@ public class ModelDefaults {
         
         String appVer = buildName + " v" + buildVersion;
         model.addAttribute("appver", appVer);
-        model.addAttribute("pagetitle", appName + " / " + pageTitle + " (" + companyName + ")");
+        model.addAttribute("pagetitle", appName + " / " + pageTitle);
         model.addAttribute("appLogo", appLogo);
         model.addAttribute("appname", appName);
         model.addAttribute("copyright", appCopyright);

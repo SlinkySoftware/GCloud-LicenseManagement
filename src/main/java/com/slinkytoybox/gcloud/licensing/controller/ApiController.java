@@ -20,6 +20,7 @@
 package com.slinkytoybox.gcloud.licensing.controller;
 
 import com.slinkytoybox.gcloud.licensing.businesslogic.LicenseManagement;
+import com.slinkytoybox.gcloud.licensing.dto.request.*;
 import com.slinkytoybox.gcloud.licensing.dto.response.*;
 import com.slinkytoybox.gcloud.licensing.security.roles.RoleUser;
 import java.security.Principal;
@@ -54,7 +55,7 @@ public class ApiController {
     public ResponseEntity<UserLicenseResponse> getMyLicenses(Principal principal) {
         final String logPrefix = "getMyLicenses() - ";
         log.trace("{}Entering Method", logPrefix);
-        log.info("{}Processing GET for /myLicenses for {}", logPrefix, principal.getName());
+        log.info("{}Processing POST for /myLicenses for {}", logPrefix, principal.getName());
         UserLicenseResponse response = new UserLicenseResponse();
         List<PlatformDTO> platforms = licMgmt.getUserPlatforms(principal.getName());
         Map<Long, LicenseDTO> licenses = licMgmt.getUserLicenses(principal.getName());
@@ -75,8 +76,7 @@ public class ApiController {
                         .setUpn(lic.getUpn())
                         .setLicenseId(lic.getId())
                         .setCanExtend(lic.getExpiryDate().isBefore(LocalDateTime.now().plusSeconds(canExtendTime)))
-                        .setExpired(lic.getExpiryDate().isBefore(LocalDateTime.now()))
-                        ;
+                        .setExpired(lic.getExpiryDate().isBefore(LocalDateTime.now()));
             }
             else {
                 row.setLicenseAllocated(false)
@@ -93,6 +93,29 @@ public class ApiController {
         response.setLicenseResponse(licResp);
         return ResponseEntity.ok().body(response);
 
+    }
+
+    @PostMapping(path = "/modifyLicense", produces = "application/json", consumes = "application/json")
+    public ResponseEntity<BooleanResponse> modifyLicense(Principal principal, @RequestBody UserLicenseRequest licenseRequest) {
+        final String logPrefix = "newLicense() - ";
+        log.trace("{}Entering Method", logPrefix);
+        log.info("{}Processing POST for /modifyLicense for {} -> {}", logPrefix, principal.getName(), licenseRequest);
+        switch (licenseRequest.getRequestType()) {
+            case CREATE -> {
+                
+            }
+            case EXTEND -> {
+                
+            }
+            case RETURN -> {
+                
+            }
+            default -> {
+                
+            }
+        }
+        
+        return null;
     }
 
 }

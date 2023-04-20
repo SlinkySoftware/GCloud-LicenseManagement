@@ -25,14 +25,12 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /**
@@ -47,10 +45,30 @@ public class LicenseManagement {
     private CloudDatabaseConnection cdc;
 
     //TODO:
-    // Create new license
     // Check license available
     // Extend license
     
+    
+    // Create new license
+    public LicenseDTO createUserLicense(String upn, Long cloudPlatformId) {
+        final String logPrefix = "getUserLicenses() - ";
+        log.trace("{}Entering Method", logPrefix);
+        if (upn == null || upn.isBlank()) {
+            log.error("{}UPN cannot be null or empty", logPrefix);
+            throw new IllegalArgumentException("UPN cannot be null or empty");
+        }
+        if (cloudPlatformId == null || cloudPlatformId == 0) {
+            log.error("{}CloudPlatformId cannot be null or zero", logPrefix);
+            throw new IllegalArgumentException("CloudPlatformId cannot be null or zero");
+        }
+        
+        log.info("{}Creating new license for {} on platform {}", logPrefix, upn, cloudPlatformId);
+        LicenseDTO license = new LicenseDTO()
+                .setUpn(upn);
+        
+        
+        return license;
+    }
     
     // Get existing license from database
     public Map<Long, LicenseDTO> getUserLicenses(String upn) {

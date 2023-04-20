@@ -39,31 +39,31 @@
 
             <div class="row">&nbsp;</div>
 
-            <div class="row px-3" id="jsError" style="display: none;" onclick="$('#jsError').hide();">
-                <div class="col-12 alert alert-danger fade show text-center alert-dismissible" role="alert">
+            <div class="row px-3 justify-content-center" id="jsError" style="display: none;" onclick="$('#jsError').hide();">
+                <div class="col-10 alert alert-danger fade show text-center alert-dismissible" role="alert">
                     <span id="jsErrorText"></span>
-                    <button type="button" class="close" onclick="$('#jsError').hide();">&times;</button>
+                    <button type="button" class="btn-close" onclick="$('#jsError').hide();"></button>
                 </div>         
             </div>
-            <div class="row px-3" id="jsSuccess" style="display: none;" onclick="$('#jsSuccess').hide();">
-                <div class="col-12 alert alert-success fade show text-center alert-dismissible" role="alert">
+            <div class="row px-3 justify-content-center" id="jsSuccess" style="display: none;" onclick="$('#jsSuccess').hide();">
+                <div class="col-10 alert alert-success fade show text-center alert-dismissible" role="alert">
                     <span id="jsSuccessText"></span>
-                    <button type="button" class="close" onclick="$('#jsSuccess').hide();">&times;</button>
+                    <button type="button" class="btn-close" onclick="$('#jsSuccess').hide();"></button>
                 </div>
             </div>
             <div th:if="${showError == 1}" th:remove="tag">
-                <div class="row px-3" id="thError" onclick="$('#thError').hide();">
-                    <div class="col-12 alert alert-danger fade show text-center alert-dismissible" role="alert">
+                <div class="row px-3 justify-content-center" id="thError" onclick="$('#thError').hide();">
+                    <div class="col-10 alert alert-danger fade show text-center alert-dismissible" role="alert">
                         <span th:text="${errorText}"></span>
-                        <button type="button" class="close" onclick="$('#thError').hide();">&times;</button>
+                        <button type="button" class="btn-close" onclick="$('#thError').hide();"></button>
                     </div>         
                 </div>
             </div>
             <div th:if="${showSuccess == 1}" th:remove="tag">
-                <div class="row px-3" id="thSuccess" onclick="$('#thSuccess').hide();">
-                    <div class="col-12 alert alert-success fade show text-center alert-dismissible" role="alert">
+                <div class="row px-3 justify-content-center" id="thSuccess" onclick="$('#thSuccess').hide();">
+                    <div class="col-10 alert alert-success fade show text-center alert-dismissible" role="alert">
                         <span th:text="${successText}"></span>
-                        <button type="button" class="close" onclick="$('#thSuccess').hide();">&times;</button>
+                        <button type="button" class="btn-close" onclick="$('#thSuccess').hide();"></button>
                     </div>         
                 </div>
             </div>
@@ -74,7 +74,7 @@
             <div class="row">&nbsp;</div>
             <div class="row">&nbsp;</div>
             <div class="row">&nbsp;</div>
-            <div class="col-12 fixed-bottom py-2 blue-grey lighten-5" style="z-order: 9999;">
+            <div class="col-12 fixed-bottom py-2 bg-secondary bg-opacity-25" style="z-order: 9999;">
                 <div class="container-fluid">
                     <div class="row justify-content-between">
                         <div class="col-4 align-middle">
@@ -82,7 +82,7 @@
                             <div sec:authorize="isAnonymous()" th:remove="tag"><small class="font-weight-lighter">You are not currently logged in (<a id="mnuLogin" th:href="@{/auth/login}">Login</a>)</small></div>
                         </div>
                         <div class="col-4 text-center align-middle"><small class="font-weight-lighter" th:text="${appver}"></small></div>
-                        <div class="col-4 text-end align-middle"><small class="font-weight-lighter"><div th:remove="tag" th:text="${copyright}">&copy;</div></small></div>
+                        <div class="col-4 text-end align-middle"><small class="font-weight-lighter"><div th:remove="tag" th:text="${copyright}">&copy;</div> - Licensed under the AGPL v3 (<a th:href="@{/source/code}">Source</a>)</small></div>
                     </div>
                 </div>
             </div>

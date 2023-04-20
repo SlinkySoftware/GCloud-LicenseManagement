@@ -1,5 +1,5 @@
 /*
- *   gcloudlicensemanagement - UserLicenseRequest.java
+ *   gcloudlicensemanagement - BooleanResponse.java
  *
  *   Copyright (c) 2022-2023, Slinky Software
  *
@@ -17,26 +17,21 @@
  *   AGPL-3.0.md supplied with the source code.
  *
  */
-package com.slinkytoybox.gcloud.licensing.dto.request;
+package com.slinkytoybox.gcloud.licensing.dto.response;
 
 import java.io.Serializable;
 import lombok.Data;
+import lombok.experimental.Accessors;
 
 /**
  *
  * @author Michael Junek (michael@juneks.com.au)
  */
 @Data
-public class UserLicenseRequest implements Serializable {
+@Accessors(chain = true)
+public class BooleanResponse implements Serializable {
     
-    private Long cloudPlatformId;
-    private Long licenseId;
-    private RequestType requestType;
+    private boolean success;
+    private String errorMessage;
     
-    
-    public enum RequestType {
-        CREATE,
-        EXTEND,
-        RETURN
-    }
 }
