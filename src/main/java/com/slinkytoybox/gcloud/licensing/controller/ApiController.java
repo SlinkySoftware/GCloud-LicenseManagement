@@ -100,17 +100,23 @@ public class ApiController {
         final String logPrefix = "newLicense() - ";
         log.trace("{}Entering Method", logPrefix);
         log.info("{}Processing POST for /modifyLicense for {} -> {}", logPrefix, principal.getName(), licenseRequest);
+        BooleanResponse resp = new BooleanResponse();
+        
         switch (licenseRequest.getRequestType()) {
             case CREATE -> {
-                
+                log.debug("{}Detected license creation request");
             }
             case EXTEND -> {
+                log.debug("{}Detected license extension request");
                 
             }
             case RETURN -> {
+                log.debug("{}Detected license return request");
                 
             }
             default -> {
+                log.error("{}Could not detect request type!");
+                
                 
             }
         }

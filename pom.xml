@@ -45,8 +45,8 @@
         <maven.compiler.release>17</maven.compiler.release>
 
         <mssql.version>11.2.3.jre17</mssql.version>
-        <opensaml.version>4.3.0</opensaml.version>
         <purecloud.version>173.0.0</purecloud.version>
+        <opensaml.version>4.3.0</opensaml.version>
         <microsoftgraph.version>5.52.0</microsoftgraph.version>
         <msadal.version>1.6.7</msadal.version>
         <azureidentity.version>1.8.2</azureidentity.version>

@@ -38,8 +38,8 @@ import org.springframework.stereotype.Service;
  *
  * @author Michael Junek (michael@juneks.com.au)
  */
-//@Service("GCloudAPIConnection")
-//@DependsOn("CloudDatabaseConnection")
+@Service("GCloudAPIConnection")
+@DependsOn("CloudDatabaseConnection")
 @Slf4j
 public class GCloudAPIConnection {
 
