@@ -47,7 +47,7 @@ public class GCloudAPIConnection {
     private static final String USER_AGENT = "GCloud-License-Management";
     private final CloudDatabaseConnection dbConn;
 
-    @Value("${genesys.cloud.api-timeout:5000}")
+    @Value("${genesys.cloud.api-timeout:10000}")
     private Integer apiTimeout;
 
     private final DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG, Locale.ENGLISH);
