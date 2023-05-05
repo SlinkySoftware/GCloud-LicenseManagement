@@ -22,6 +22,7 @@ let debug = true;
 let ajaxBase = contextPath + 'api/v1/';
 if (debug)
     console.log("AJAX Base:", ajaxBase);
+
 let licenseTable = $('#licenseTable').DataTable({
     "autoWidth": false,
     "lengthChange": false,
@@ -60,13 +61,13 @@ let licenseTable = $('#licenseTable').DataTable({
                     if (!row.expired) {
                         buttonHtml += '<button class="btn btn-outline-info" onclick="loadPlatform(\'' + row.organisationId + '\');"><span class="fas fa-right-to-bracket"></span> Log In</button>&nbsp;';
                         if (row.canExtend) {
-                            buttonHtml += '<button class="btn btn-outline-warning" onclick="extendLicense(\'' + data + '\');"><span class="fas fa-square-plus"></span> Extend</button>&nbsp;';
+                            buttonHtml += '<button class="btn btn-outline-warning" onclick="extendLicense(\'' + data + '\', this);"><span class="fas fa-square-plus"></span> Extend</button>&nbsp;';
                         }
                     }
-                    buttonHtml += '<button class="btn btn-outline-danger" onclick="revokeLicense(\'' + data + '\');"><span class="fas fa-flag-checkered"></span> Return</button>';
+                    buttonHtml += '<button class="btn btn-outline-danger" onclick="revokeLicense(\'' + data + '\', this);"><span class="fas fa-flag-checkered"></span> Return</button>';
                 }
                 else {
-                    buttonHtml += '<button class="btn btn-outline-success" onclick="allocateLicense(\'' + row.cloudPlatformId + '\');"><span class="fas fa-up-right-from-square"></span> Allocate License</button>';
+                    buttonHtml += '<button class="btn btn-outline-success" onclick="allocateLicense(\'' + row.cloudPlatformId + '\', this);"><span class="fas fa-up-right-from-square"></span> Allocate License</button>';
                 }
                 if (debug)
                     console.log("ButtonHTML", buttonHtml);
@@ -122,6 +123,22 @@ let licenseTable = $('#licenseTable').DataTable({
 });
 
 
+let stringMap = {
+    CREATE: {
+        success: "A license was allocated successfully.",
+        failure: "An error was encountered whilst allocating a license."
+    },
+    REVOKE: {
+        success: "The license was returned successfully.",
+        failure: "An error was encountered whilst returning the license."
+    },
+    EXTEND: {
+        success: "The license was extended successfully.",
+        failure: "An error was encountered whilst extending the license."
+    }
+};
+
+
 function loadPlatform(organisationId) {
     if (debug)
         console.log("Logging in to platform", organisationId);
@@ -129,17 +146,22 @@ function loadPlatform(organisationId) {
 }
 
 
-function extendLicense(licenseId) {
+function extendLicense(licenseId, button) {
     if (debug)
-        console.log("Extending license ID", licenseId);
-    if (debug)
-        console.log("Reloading license table");
-    licenseTable.ajax.reload();
+        console.log("Extending license ", licenseId);
+
+    let licenseRequest = {
+        "cloudPlatformId": null,
+        "licenseId": licenseId,
+        "requestType": "EXTEND"
+    };
+
+    performLicenseRequest(licenseRequest, button);
 
 }
 
 
-function allocateLicense(platformId) {
+function allocateLicense(platformId, button) {
     if (debug)
         console.log("Allocating license for platform", platformId);
 
@@ -149,8 +171,30 @@ function allocateLicense(platformId) {
         "requestType": "CREATE"
     };
 
+    performLicenseRequest(licenseRequest, button);
+}
+
+function revokeLicense(licenseId, button) {
+    if (debug)
+        console.log("Revoking license ", licenseId);
+
+    let licenseRequest = {
+        "cloudPlatformId": null,
+        "licenseId": licenseId,
+        "requestType": "REVOKE"
+    };
+
+    performLicenseRequest(licenseRequest, button);
+
+}
+
+
+function performLicenseRequest(licenseRequest, button) {
+    if (debug)
+        console.log("Button clicked:", button);
+
     $.ajax({
-        url: ajaxBase + "newLicense",
+        url: ajaxBase + "modifyLicense",
         method: "POST",
         contentType: "application/json",
         dataType: "json",
@@ -159,37 +203,24 @@ function allocateLicense(platformId) {
             console.log("AJAX finished - ResponseData:", responseData);
             if (responseData.success) {
                 console.log("Success creating license");
-                $('#jsSuccessText').text("The license was allocated successfully.");
+                $('#jsSuccessText').text(stringMap[licenseRequest.requestType].success);
                 $('#jsSuccess').show();
-
                 console.log("Reloading license table");
                 licenseTable.ajax.reload();
-
             }
             else {
                 console.log("Error:", responseData.errorMessage);
-                $('#jsErrorText').text("An error was encountered whilst creating allocating a license.");
+                $('#jsErrorText').text(stringMap[licenseRequest.requestType].failure);
                 $('#jsError').show();
 
             }
-
-
-
         },
         error: function (error) {
             console.log("Error:", error);
-            $('#jsErrorText').text("An error was encountered whilst creating allocating a license.");
+            $('#jsErrorText').text(stringMap[licenseRequest.requestType].failure);
             $('#jsError').show();
         }
     });
-
-
 }
 
 
-function revokeLicense(licenseId) {
-    console.log("Revoking license ID", licenseId);
-    console.log("Reloading license table");
-    licenseTable.ajax.reload();
-
-}

@@ -37,6 +37,6 @@ public class UserLicenseRequest implements Serializable {
     public enum RequestType {
         CREATE,
         EXTEND,
-        RETURN
+        REVOKE
     }
 }

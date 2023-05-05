@@ -44,14 +44,14 @@ public class LicenseManagement {
     @Autowired
     private CloudDatabaseConnection cdc;
 
-    //TODO:
     // Check license available
-    // Extend license
-    
-    
+    public Boolean isLicenseAvailable(String upn, Long cloudPlatformId) {
+        return Boolean.TRUE;
+    }
+
     // Create new license
-    public LicenseDTO createUserLicense(String upn, Long cloudPlatformId) {
-        final String logPrefix = "getUserLicenses() - ";
+    public BooleanResponse createUserLicense(String upn, Long cloudPlatformId) {
+        final String logPrefix = "createUserLicense() - ";
         log.trace("{}Entering Method", logPrefix);
         if (upn == null || upn.isBlank()) {
             log.error("{}UPN cannot be null or empty", logPrefix);
@@ -61,15 +61,15 @@ public class LicenseManagement {
             log.error("{}CloudPlatformId cannot be null or zero", logPrefix);
             throw new IllegalArgumentException("CloudPlatformId cannot be null or zero");
         }
-        
+        BooleanResponse response = new BooleanResponse();
+
         log.info("{}Creating new license for {} on platform {}", logPrefix, upn, cloudPlatformId);
         LicenseDTO license = new LicenseDTO()
                 .setUpn(upn);
-        
-        
-        return license;
+
+        return response;
     }
-    
+
     // Get existing license from database
     public Map<Long, LicenseDTO> getUserLicenses(String upn) {
         final String logPrefix = "getUserLicenses() - ";
@@ -97,7 +97,7 @@ public class LicenseManagement {
                                 .setExpiryDate(rs.getTimestamp("LicenseExpiryDateTime").toLocalDateTime())
                                 .setIssueDate(rs.getTimestamp("LicenseIssueDateTime").toLocalDateTime())
                                 .setUpn(upn);
-                          
+
                         log.debug("{}Got a license {}", logPrefix, dto);
                         licenses.put(rs.getLong("CloudPlatformId"), dto);
                     }
@@ -110,6 +110,36 @@ public class LicenseManagement {
         log.info("{}Found a total of {} issued licenses for user {}", logPrefix, licenses.size(), upn);
         return licenses;
 
+    }
+
+    // Extend license
+    public BooleanResponse extendUserLicense(Long licenseId) {
+        final String logPrefix = "extendUserLicense() - ";
+        log.trace("{}Entering Method", logPrefix);
+        if (licenseId == null || licenseId == 0) {
+            log.error("{}licenseId cannot be null or zero", logPrefix);
+            throw new IllegalArgumentException("licenseId cannot be null or zero");
+        }
+        BooleanResponse response = new BooleanResponse();
+
+        log.info("{}Extending license {}", logPrefix, licenseId);
+
+        return response;
+    }
+
+    // Return License
+    public BooleanResponse returnUserLicense(Long licenseId) {
+        final String logPrefix = "returnUserLicense() - ";
+        log.trace("{}Entering Method", logPrefix);
+        if (licenseId == null || licenseId == 0) {
+            log.error("{}licenseId cannot be null or zero", logPrefix);
+            throw new IllegalArgumentException("licenseId cannot be null or zero");
+        }
+        BooleanResponse response = new BooleanResponse();
+
+        log.info("{}Returning license {}", logPrefix, licenseId);
+
+        return response;
     }
 
     // Get User Platforms

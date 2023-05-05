@@ -101,27 +101,52 @@ public class ApiController {
         log.trace("{}Entering Method", logPrefix);
         log.info("{}Processing POST for /modifyLicense for {} -> {}", logPrefix, principal.getName(), licenseRequest);
         BooleanResponse resp = new BooleanResponse();
-        
+
         switch (licenseRequest.getRequestType()) {
+
             case CREATE -> {
-                log.debug("{}Detected license creation request");
+                log.debug("{}Detected license creation request", logPrefix);
+                if (licenseRequest.getCloudPlatformId() == null || licenseRequest.getCloudPlatformId() == 0) {
+                    log.error("{}Cloud Platform ID must be supplied in request", logPrefix);
+                    resp.setSuccess(false);
+                    resp.setErrorMessage("Invalid license request");
+                    return ResponseEntity.badRequest().body(resp);
+                }
+                resp = licMgmt.createUserLicense(principal.getName(), licenseRequest.getCloudPlatformId());
             }
+
             case EXTEND -> {
-                log.debug("{}Detected license extension request");
-                
+                log.debug("{}Detected license extension request", logPrefix);
+                if (licenseRequest.getLicenseId() == null || licenseRequest.getLicenseId() == 0) {
+                    log.error("{}License ID must be supplied in request", logPrefix);
+                    resp.setSuccess(false);
+                    resp.setErrorMessage("Invalid license request");
+                    return ResponseEntity.badRequest().body(resp);
+                }
+                resp = licMgmt.extendUserLicense(licenseRequest.getLicenseId());
             }
-            case RETURN -> {
-                log.debug("{}Detected license return request");
-                
+
+            case REVOKE -> {
+                log.debug("{}Detected license return request", logPrefix);
+                if (licenseRequest.getLicenseId() == null || licenseRequest.getLicenseId() == 0) {
+                    log.error("{}License ID must be supplied in request", logPrefix);
+                    resp.setSuccess(false);
+                    resp.setErrorMessage("Invalid license request");
+                    return ResponseEntity.badRequest().body(resp);
+                }
+                resp = licMgmt.returnUserLicense(licenseRequest.getLicenseId());
             }
+
             default -> {
-                log.error("{}Could not detect request type!");
-                
-                
+                log.error("{}Could not detect request type!", logPrefix);
+                resp.setSuccess(false);
+                resp.setErrorMessage("Could not detect request type");
+                return ResponseEntity.badRequest().body(resp);
+
             }
         }
-        
-        return null;
+        log.debug("{}Returning response: {}", logPrefix, resp);
+        return ResponseEntity.ok().body(resp);
     }
 
 }
