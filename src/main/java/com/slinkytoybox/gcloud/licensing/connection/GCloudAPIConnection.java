@@ -22,6 +22,7 @@ package com.slinkytoybox.gcloud.licensing.connection;
 import com.mypurecloud.sdk.v2.*;
 import com.mypurecloud.sdk.v2.extensions.AuthResponse;
 import com.slinkytoybox.gcloud.licensing.genesys.CloudPlatform;
+import com.slinkytoybox.gcloud.licensing.init.PlatformEncryption;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.util.Locale;
@@ -30,6 +31,7 @@ import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Service;
@@ -39,13 +41,16 @@ import org.springframework.stereotype.Service;
  * @author Michael Junek (michael@juneks.com.au)
  */
 @Service("GCloudAPIConnection")
-@DependsOn("CloudDatabaseConnection")
+@DependsOn({"CloudDatabaseConnection", "PlatformEncryption"})
 @Slf4j
 public class GCloudAPIConnection {
 
     private final Map<Long, CloudPlatform> cloudPlatforms = new HashMap<>();
     private static final String USER_AGENT = "GCloud-License-Management";
     private final CloudDatabaseConnection dbConn;
+    
+    @Autowired
+    private PlatformEncryption enc;
 
     @Value("${genesys.cloud.api-timeout:10000}")
     private Integer apiTimeout;
@@ -86,7 +91,7 @@ public class GCloudAPIConnection {
                                         .setOrganisationId(rs.getNString("OrganisationId"))
                                         .setApiRegion(rs.getNString("ApiRegion"))
                                         .setApiClientId(rs.getNString("ApiClientId"))
-                                        .setApiClientSecret(rs.getNString("APIClientSecret"))
+                                        .setApiClientSecret(enc.decrypt(rs.getNString("APIClientSecret")))
                                         .setAzureAdAccessGroup(rs.getNString("AzureAdAccessGroup"));
                                 log.info("{}Got Cloud Platform {} - attempting to connect", logPrefix, cp);
 

@@ -19,6 +19,7 @@
  */
 package com.slinkytoybox.gcloud.licensing.connection;
 
+import com.slinkytoybox.gcloud.licensing.init.PlatformEncryption;
 import com.zaxxer.hikari.HikariDataSource;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -26,12 +27,18 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
+import java.util.stream.StreamSupport;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.DependsOn;
+import org.springframework.core.env.AbstractEnvironment;
 import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.core.env.EnumerablePropertySource;
 import org.springframework.core.env.MapPropertySource;
 import org.springframework.core.env.MutablePropertySources;
 import org.springframework.stereotype.Service;
@@ -41,6 +48,7 @@ import org.springframework.stereotype.Service;
  * @author Michael Junek (michael@juneks.com.au)
  */
 @Service("CloudDatabaseConnection")
+@DependsOn("PlatformEncryption")
 @Slf4j
 public class CloudDatabaseConnection {
 
@@ -68,6 +76,9 @@ public class CloudDatabaseConnection {
     private Long poolKeepaliveTime;
 
     @Autowired
+    private PlatformEncryption encryptor;
+
+    @Autowired
     private ConfigurableEnvironment env;
 
     @PostConstruct
@@ -84,10 +95,30 @@ public class CloudDatabaseConnection {
 
         log.debug("{}Connection Parameters:\nURL:  {}\nUser:  {}", logPrefix, jdbcUrl, jdbcUser);
 
+
+        String decryptedPassword;
+        decryptedPassword = encryptor.decrypt(jdbcPassword);
+        if (decryptedPassword == null || decryptedPassword.isBlank()) {
+            throw new IllegalArgumentException("Encrypted password could not be decrypted");
+        }
+        
+        log.debug("{}Getting data source properties", logPrefix);
+        final MutablePropertySources allSources = ((AbstractEnvironment) env).getPropertySources();
+        Properties dsProps = new Properties();
+        StreamSupport.stream(allSources.spliterator(), false)
+                .filter(ps -> ps instanceof EnumerablePropertySource)
+                .map(ps -> ((EnumerablePropertySource) ps).getPropertyNames())
+                .flatMap(Arrays::stream)
+                .distinct()
+                .filter(prop -> (prop.startsWith("cloud.database.properties.")))
+                .forEach(prop -> dsProps.setProperty(prop.replace("cloud.database.properties.", ""), env.getProperty(prop)));
+        dsProps.setProperty("applicationName", "Genesys Cloud Plugin Framework");
+        
         log.debug("{}Creating Connection Pool", logPrefix);
         poolSource.setJdbcUrl(jdbcUrl);
         poolSource.setUsername(jdbcUser);
-        poolSource.setPassword(jdbcPassword);
+        poolSource.setPassword(decryptedPassword);
+        poolSource.setDataSourceProperties(dsProps);
         poolSource.setMinimumIdle(poolMinSize);
 
         poolSource.setConnectionTestQuery(poolTestQuery);
