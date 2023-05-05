@@ -82,6 +82,10 @@
             <artifactId>spring-security-saml2-service-provider</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.opensaml</groupId>
             <artifactId>opensaml-core</artifactId>
             <version>${opensaml.version}</version>
@@ -141,7 +145,7 @@
             <artifactId>platform-client-v2</artifactId>
             <version>${purecloud.version}</version>
         </dependency>
-           <dependency>
+        <dependency>
             <groupId>org.jasypt</groupId>
             <artifactId>jasypt</artifactId>
             <version>1.9.3</version>

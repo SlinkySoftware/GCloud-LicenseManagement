@@ -19,14 +19,10 @@
  */
 package com.slinkytoybox.gcloud.licensing.businesslogic;
 
-import com.slinkytoybox.gcloud.licensing.connection.CloudDatabaseConnection;
+import com.slinkytoybox.gcloud.licensing.dto.internal.AlertMessage;
+import com.slinkytoybox.gcloud.licensing.dto.internal.LicenseDTO;
 import com.slinkytoybox.gcloud.licensing.dto.response.*;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -42,10 +38,21 @@ import org.springframework.stereotype.Component;
 public class LicenseManagement {
 
     @Autowired
-    private CloudDatabaseConnection cdc;
+    private DatabaseFunctions dbFunc;
+
+    @Autowired
+    private AzureADFunctions adFunc;
+
+    @Autowired
+    private GCloudFunctions cloudFunc;
+
+    @Autowired
+    private AlertFunctions alertFunc;
 
     // Check license available
     public Boolean isLicenseAvailable(String upn, Long cloudPlatformId) {
+        final String logPrefix = "isLicenseAvailable() - ";
+        log.trace("{}Entering Method", logPrefix);
         return Boolean.TRUE;
     }
 
@@ -63,9 +70,128 @@ public class LicenseManagement {
         }
         BooleanResponse response = new BooleanResponse();
 
+        // look up license group for user
+        Map<String, Object> licenseGroupDetails = dbFunc.getUserLicenseGroupDetails(upn, cloudPlatformId);
+        if (licenseGroupDetails == null) {
+            response.setFriendlyMessage("Your account is not configured correctly. Please contact your team leader.");
+            response.setDetailedMessage("Unable to retrieve license group details");
+            response.setSuccess(false);
+            AlertMessage am = new AlertMessage()
+                    .setSubject("GCloud Licensing - User not configured")
+                    .setMessage("User: " + upn + " is not configured and could not check out a license")
+                    .setSource("LicenseManagement.createUserLicense()")
+                    .setDetails("Cloud Platform ID " + cloudPlatformId + " | License Group ID: null");
+            ;
+            alertFunc.alertPlatformAdmins(am);
+            return response;
+        }
+
+        // get count of licenses in use
+        log.debug("{}Getting existing license counts", logPrefix);
+        Map<Long, Long> licenseCount = dbFunc.getCurrentLicenseUsage();
+        Long lgCount = licenseCount.get((Long) licenseGroupDetails.get("LICENSEGROUPID"));
+
+        // check current license count
+        if (lgCount >= (Long) licenseGroupDetails.get("HARDLIMIT")) {
+            // over hard limit
+            log.error("{}License Group {} has {} issued licenses, over hard limit of {}", logPrefix, licenseGroupDetails.get("LICENSEGROUPID"), lgCount, licenseGroupDetails.get("HARDLIMIT"));
+            response.setFriendlyMessage("There are insufficent licenses available at this time. Please contact your team leader.");
+            response.setDetailedMessage("License Group " + (Long) licenseGroupDetails.get("LICENSEGROUPID") + " has " + lgCount + " >  Hard Limit: " + (Long) licenseGroupDetails.get("HARDLIMIT") + "");
+            response.setSuccess(false);
+            AlertMessage am = new AlertMessage()
+                    .setSubject("GCloud Licensing - License Hard Limit Reached")
+                    .setMessage("License Group: " + (String) licenseGroupDetails.get("LICENSEGROUPNAME") + " has exceeded its hard limit of licenses. A user has been affected!")
+                    .setSource("LicenseManagement.createUserLicense()")
+                    .setDetails(
+                            "Cloud Platform ID: " + cloudPlatformId
+                            + " | License Group ID: " + (Long) licenseGroupDetails.get("LICENSEGROUPID")
+                            + " | Hard Limit: " + (Long) licenseGroupDetails.get("HARDLIMIT")
+                            + " | Current Licenses: " + lgCount
+                            + " | User UPN: " + upn
+                            + " | User Name: " + (String) licenseGroupDetails.get("USERFULLNAME")
+                            + " | User Type: " + (String) licenseGroupDetails.get("USERTYPENAME")
+                    );
+            alertFunc.alertPlatformAdmins(am);
+            return response;
+        }
+        else if (lgCount >= (Long) licenseGroupDetails.get("SOFTLIMIT")) {
+            // over soft limit
+            log.warn("{}License Group {} has {} issued licenses, over soft limit of {}", logPrefix, lgCount, licenseGroupDetails.get("SOFTLIMIT"));
+
+            AlertMessage am = new AlertMessage()
+                    .setSubject("GCloud Licensing - License Soft Limit Reached")
+                    .setMessage("License Group: " + (String) licenseGroupDetails.get("LICENSEGROUPNAME") + " has exceeded its soft limit of licenses. There is no user impact yet.")
+                    .setSource("LicenseManagement.createUserLicense()")
+                    .setDetails(
+                            "Cloud Platform ID: " + cloudPlatformId
+                            + " | License Group ID: " + (Long) licenseGroupDetails.get("LICENSEGROUPID")
+                            + " | Soft Limit: " + (Long) licenseGroupDetails.get("SOFTLIMIT")
+                            + " | Hard Limit: " + (Long) licenseGroupDetails.get("HARDLIMIT")
+                            + " | Current Licenses: " + lgCount + ""
+                    );
+            alertFunc.alertPlatformAdmins(am);
+        }
+
         log.info("{}Creating new license for {} on platform {}", logPrefix, upn, cloudPlatformId);
-        LicenseDTO license = new LicenseDTO()
-                .setUpn(upn);
+
+        // update AzureAd Group
+        String groupName = cloudFunc.getAzureAdAccessGroup(cloudPlatformId);
+
+        if (groupName != null && !groupName.isBlank()) {
+            Boolean success = adFunc.addUserToGroup(upn, groupName);
+            if (!success) {
+                log.error("{}An error occurred adding user to the AD group", logPrefix);
+                response.setFriendlyMessage("A system error occurred allocating a license. Please contact your team leader.");
+                response.setDetailedMessage("AzureAD addUserToGroup function returned error");
+                response.setSuccess(false);
+                AlertMessage am = new AlertMessage()
+                        .setSubject("GCloud Licensing - AzureAD Group Addition Failed")
+                        .setMessage("User: " + upn + " could not be added to AzureAD group " + groupName)
+                        .setSource("LicenseManagement.createUserLicense()")
+                        .setDetails(
+                                "Cloud Platform ID: " + cloudPlatformId
+                                + " | License Group ID: " + (Long) licenseGroupDetails.get("LICENSEGROUPID")
+                                + " | Current Licenses: " + lgCount
+                                + " | User UPN: " + upn
+                                + " | User Name: " + (String) licenseGroupDetails.get("USERFULLNAME")
+                                + " | User Type: " + (String) licenseGroupDetails.get("USERTYPENAME")
+                                + " | Azure AD Group: " + groupName
+                        );
+                alertFunc.alertPlatformAdmins(am);
+                return response;
+            }
+        }
+        else {
+            log.warn("{}No AzureAd group defined for Cloud Platform {}. Not adding to the group", logPrefix, cloudPlatformId);
+        }
+
+        // write license to database
+        Long secondsToAdd = (Long) licenseGroupDetails.get("DEFAULTISSUESECONDS");
+        LocalDateTime expiryTime = LocalDateTime.now().plusSeconds(secondsToAdd);
+        if (dbFunc.writeLicenseToDatabase((Long) licenseGroupDetails.get("USERID"), (Long) licenseGroupDetails.get("LICENSEGROUPID"), cloudPlatformId, expiryTime)) {
+            log.info("{}Successfully wrote license to database. Returning license allocation success", logPrefix);
+            response.setSuccess(true);
+        }
+        else {
+            log.error("{}An error occurred writing the license to the database", logPrefix);
+            response.setFriendlyMessage("A system error occurred allocating a license. Please contact your team leader.");
+            response.setDetailedMessage("Database writeLicense function returned error");
+            response.setSuccess(false);
+            AlertMessage am = new AlertMessage()
+                    .setSubject("GCloud Licensing - Database Write Failed")
+                    .setMessage("User: " + upn + " license could not be written to the database")
+                    .setSource("LicenseManagement.createUserLicense()")
+                    .setDetails(
+                            "Cloud Platform ID: " + cloudPlatformId
+                            + " | License Group ID: " + (Long) licenseGroupDetails.get("LICENSEGROUPID")
+                            + " | Current Licenses: " + lgCount
+                            + " | User UPN: " + upn
+                            + " | User Name: " + (String) licenseGroupDetails.get("USERFULLNAME")
+                            + " | User Type: " + (String) licenseGroupDetails.get("USERTYPENAME")
+                            + " | Azure AD Group: " + groupName
+                    );
+            alertFunc.alertPlatformAdmins(am);
+        }
 
         return response;
     }
@@ -80,33 +206,7 @@ public class LicenseManagement {
             throw new IllegalArgumentException("UPN cannot be null or empty");
         }
 
-        Map<Long, LicenseDTO> licenses = new HashMap<>();
-
-        log.info("{}Looking up existing licenses for {}", logPrefix, upn);
-        String platformSql = "SELECT LIC.Id, LIC.LicenseIssueDateTime, LIC.LicenseExpiryDateTime, U.UPN, LIC.CloudPlatformID FROM LIC_ISSUED_LICENSE LIC"
-                + " INNER JOIN PROV_USER U ON U.Id = LIC.UserId"
-                + " WHERE U.UPN = ?";
-        try (Connection dbConnection = cdc.getDatabaseConnection()) {
-            try (PreparedStatement ps = dbConnection.prepareStatement(platformSql)) {
-                ps.setNString(1, upn);
-                try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) {
-                        LicenseDTO dto = new LicenseDTO()
-                                .setId(rs.getLong("Id"))
-                                .setCloudPlatformId(rs.getLong("CloudPlatformId"))
-                                .setExpiryDate(rs.getTimestamp("LicenseExpiryDateTime").toLocalDateTime())
-                                .setIssueDate(rs.getTimestamp("LicenseIssueDateTime").toLocalDateTime())
-                                .setUpn(upn);
-
-                        log.debug("{}Got a license {}", logPrefix, dto);
-                        licenses.put(rs.getLong("CloudPlatformId"), dto);
-                    }
-                }
-            }
-        }
-        catch (SQLException ex) {
-            log.error("{}SQL Exception encountered", logPrefix, ex);
-        }
+        Map<Long, LicenseDTO> licenses = dbFunc.getLicenseFromDB(upn);
         log.info("{}Found a total of {} issued licenses for user {}", logPrefix, licenses.size(), upn);
         return licenses;
 
@@ -152,33 +252,7 @@ public class LicenseManagement {
             throw new IllegalArgumentException("UPN cannot be null or empty");
         }
 
-        List<PlatformDTO> platforms = new ArrayList<>();
-
-        log.info("{}Looking up available platforms for {}", logPrefix, upn);
-        String platformSql = "SELECT CP.Id, CP.Name, CP.OrganisationName, CP.OrganisationId FROM COM_CLOUD_PLATFORM CP"
-                + " INNER JOIN PROV_USER_TYPE UT ON CP.Id = UT.CloudPlatformId "
-                + " INNER JOIN PROV_MAP_USER_TO_USER_TYPE UTM ON UT.Id = UTM.UserTypeId AND UTM.CloudPlatformId = CP.Id"
-                + " INNER JOIN PROV_USER U ON U.Id = UTM.UserId"
-                + " WHERE U.UPN = ? AND CP.Enabled=1";
-        try (Connection dbConnection = cdc.getDatabaseConnection()) {
-            try (PreparedStatement ps = dbConnection.prepareStatement(platformSql)) {
-                ps.setNString(1, upn);
-                try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) {
-                        PlatformDTO dto = new PlatformDTO()
-                                .setId(rs.getLong("Id"))
-                                .setName(rs.getString("Name"))
-                                .setOrganisationName(rs.getNString("OrganisationName"))
-                                .setOrganisationId(rs.getNString("OrganisationId"));
-                        log.debug("{}Got available platform {}", logPrefix, dto);
-                        platforms.add(dto);
-                    }
-                }
-            }
-        }
-        catch (SQLException ex) {
-            log.error("{}SQL Exception encountered", logPrefix, ex);
-        }
+        List<PlatformDTO> platforms = dbFunc.getPlatformsForUserFromDB(upn);
         log.info("{}Found a total of {} platforms for user {}", logPrefix, platforms.size(), upn);
         return platforms;
     }

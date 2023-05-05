@@ -1,5 +1,5 @@
 /*
- *   gcloudlicensemanagement - BooleanResponse.java
+ *   gcloudlicensemanagement - AzureADFunctions.java
  *
  *   Copyright (c) 2022-2023, Slinky Software
  *
@@ -17,22 +17,24 @@
  *   AGPL-3.0.md supplied with the source code.
  *
  */
-package com.slinkytoybox.gcloud.licensing.dto.response;
+package com.slinkytoybox.gcloud.licensing.businesslogic;
 
-import java.io.Serializable;
-import lombok.Data;
-import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 /**
  *
  * @author Michael Junek (michael@juneks.com.au)
  */
-@Data
-@Accessors(chain = true)
-public class BooleanResponse implements Serializable {
-    
-    private boolean success;
-    private String detailedMessage;
-    private String friendlyMessage;
-    
+@Slf4j
+@Component
+public class AzureADFunctions {
+
+    Boolean addUserToGroup(String upn, String groupName) {
+        final String logPrefix = "addUserToGroup() - ";
+        log.trace("{}Entering Method", logPrefix);
+
+        return true;
+    }
+
 }

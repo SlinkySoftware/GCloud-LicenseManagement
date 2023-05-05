@@ -19,6 +19,7 @@
  */
 package com.slinkytoybox.gcloud.licensing.controller;
 
+import com.slinkytoybox.gcloud.licensing.dto.internal.LicenseDTO;
 import com.slinkytoybox.gcloud.licensing.businesslogic.LicenseManagement;
 import com.slinkytoybox.gcloud.licensing.dto.request.*;
 import com.slinkytoybox.gcloud.licensing.dto.response.*;
@@ -109,7 +110,8 @@ public class ApiController {
                 if (licenseRequest.getCloudPlatformId() == null || licenseRequest.getCloudPlatformId() == 0) {
                     log.error("{}Cloud Platform ID must be supplied in request", logPrefix);
                     resp.setSuccess(false);
-                    resp.setErrorMessage("Invalid license request");
+                    resp.setDetailedMessage("Cloud Platform ID must be supplied in request");
+                    resp.setFriendlyMessage("License allocation request is invalid");
                     return ResponseEntity.badRequest().body(resp);
                 }
                 resp = licMgmt.createUserLicense(principal.getName(), licenseRequest.getCloudPlatformId());
@@ -120,7 +122,8 @@ public class ApiController {
                 if (licenseRequest.getLicenseId() == null || licenseRequest.getLicenseId() == 0) {
                     log.error("{}License ID must be supplied in request", logPrefix);
                     resp.setSuccess(false);
-                    resp.setErrorMessage("Invalid license request");
+                    resp.setDetailedMessage("License ID must be supplied in request");
+                    resp.setFriendlyMessage("License extension request is invalid");
                     return ResponseEntity.badRequest().body(resp);
                 }
                 resp = licMgmt.extendUserLicense(licenseRequest.getLicenseId());
@@ -131,7 +134,8 @@ public class ApiController {
                 if (licenseRequest.getLicenseId() == null || licenseRequest.getLicenseId() == 0) {
                     log.error("{}License ID must be supplied in request", logPrefix);
                     resp.setSuccess(false);
-                    resp.setErrorMessage("Invalid license request");
+                    resp.setDetailedMessage("License ID must be supplied in request");
+                    resp.setFriendlyMessage("License return request is invalid");
                     return ResponseEntity.badRequest().body(resp);
                 }
                 resp = licMgmt.returnUserLicense(licenseRequest.getLicenseId());
@@ -140,7 +144,8 @@ public class ApiController {
             default -> {
                 log.error("{}Could not detect request type!", logPrefix);
                 resp.setSuccess(false);
-                resp.setErrorMessage("Could not detect request type");
+                resp.setDetailedMessage("Unknown request type: " + licenseRequest.getRequestType());
+                resp.setFriendlyMessage("Unknown license request");
                 return ResponseEntity.badRequest().body(resp);
 
             }

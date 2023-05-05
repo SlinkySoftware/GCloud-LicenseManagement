@@ -1,5 +1,5 @@
 /*
- *   gcloudlicensemanagement - LicenseDTO.java
+ *   gcloudlicensemanagement - AlertMessage.java
  *
  *   Copyright (c) 2022-2023, Slinky Software
  *
@@ -17,9 +17,8 @@
  *   AGPL-3.0.md supplied with the source code.
  *
  */
-package com.slinkytoybox.gcloud.licensing.dto.response;
+package com.slinkytoybox.gcloud.licensing.dto.internal;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -30,13 +29,10 @@ import lombok.experimental.Accessors;
  */
 @Data
 @Accessors(chain = true)
-public class LicenseDTO implements Serializable {
-    
-    private Long id;
-    private LocalDateTime issueDate;
-    private LocalDateTime expiryDate;
-    private String upn;
-    private Long cloudPlatformId;
-    private boolean canExtend;
-    
+public class AlertMessage {
+    private LocalDateTime timeStamp = LocalDateTime.now();
+    private String subject;
+    private String message;
+    private String details;
+    private String source;
 }
