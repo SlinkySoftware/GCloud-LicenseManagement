@@ -23,6 +23,9 @@ let ajaxBase = contextPath + 'api/v1/';
 if (debug)
     console.log("AJAX Base:", ajaxBase);
 
+let requestInProgress=false;
+
+
 let licenseTable = $('#licenseTable').DataTable({
     "autoWidth": false,
     "lengthChange": false,
@@ -56,10 +59,10 @@ let licenseTable = $('#licenseTable').DataTable({
             "render": function (data, type, row, meta) {
                 let buttonHtml = "";
                 if (debug)
-                    console.log("Rendering able row cell 4 for data", data);
+                    console.log("Rendering table row cell 4 for data", data);
                 if (row.licenseAllocated) {
                     if (!row.expired) {
-                        buttonHtml += '<button class="btn btn-outline-info" onclick="loadPlatform(\'' + row.organisationId + '\');"><span class="fas fa-right-to-bracket"></span> Log In</button>&nbsp;';
+                        //buttonHtml += '<button class="btn btn-outline-info" onclick="loadPlatform(\'' + row.organisationId + '\');"><span class="fas fa-right-to-bracket"></span> Log In</button>&nbsp;';
                         if (row.canExtend) {
                             buttonHtml += '<button class="btn btn-outline-warning" onclick="extendLicense(\'' + data + '\', this);"><span class="fas fa-square-plus"></span> Extend</button>&nbsp;';
                         }
@@ -111,12 +114,12 @@ let licenseTable = $('#licenseTable').DataTable({
             console.log("RowCallback - row", row, "data", data, "index", index);
         if (data.expired === true) {
             if (debug)
-                console.log("Callback: Expired");
+                console.log("Callback: Is Expired");
             $("td", row).eq(3).addClass("bg-danger bg-gradient text-white");
         }
         else if (data.canExtend === true) {
             if (debug)
-                console.log("Callback: Extend");
+                console.log("Callback: Can Extend");
             $("td", row).eq(3).addClass("bg-warning bg-gradient text-white");
         }
     }
@@ -139,17 +142,21 @@ let stringMap = {
 };
 
 
-function loadPlatform(organisationId) {
-    if (debug)
-        console.log("Logging in to platform", organisationId);
-    window.open('https://login.mypurecloud.com.au/#/authenticate-adv/org/' + organisationId, '_blank');
-}
+//function loadPlatform(organisationId) {
+//    if (debug)
+//        console.log("Logging in to platform", organisationId);
+//    window.open('https://login.mypurecloud.com.au/#/authenticate-adv/org/' + organisationId, '_blank');
+//}
 
 
 function extendLicense(licenseId, button) {
     if (debug)
         console.log("Extending license ", licenseId);
-
+    if (requestInProgress) {
+        console.warn("Request in progress, not proceeding");
+        return;
+    }
+    requestInProgress=true;
     let licenseRequest = {
         "cloudPlatformId": null,
         "licenseId": licenseId,
@@ -164,7 +171,11 @@ function extendLicense(licenseId, button) {
 function allocateLicense(platformId, button) {
     if (debug)
         console.log("Allocating license for platform", platformId);
-
+    if (requestInProgress) {
+        console.warn("Request in progress, not proceeding");
+        return;
+    }
+    requestInProgress=true;
     let licenseRequest = {
         "cloudPlatformId": platformId,
         "licenseId": 0,
@@ -177,7 +188,11 @@ function allocateLicense(platformId, button) {
 function revokeLicense(licenseId, button) {
     if (debug)
         console.log("Revoking license ", licenseId);
-
+    if (requestInProgress) {
+        console.warn("Request in progress, not proceeding");
+        return;
+    }
+    requestInProgress=true;
     let licenseRequest = {
         "cloudPlatformId": null,
         "licenseId": licenseId,
@@ -192,7 +207,7 @@ function revokeLicense(licenseId, button) {
 function performLicenseRequest(licenseRequest, button) {
     if (debug)
         console.log("Button clicked:", button);
-
+    $(button).enabled = false;
     $.ajax({
         url: ajaxBase + "modifyLicense",
         method: "POST",
@@ -206,19 +221,23 @@ function performLicenseRequest(licenseRequest, button) {
                 $('#jsSuccessText').text(stringMap[licenseRequest.requestType].success);
                 $('#jsSuccess').show();
                 console.log("Reloading license table");
+                requestInProgress=false;
                 licenseTable.ajax.reload();
+                
             }
             else {
-                console.log("Error:", responseData.errorMessage);
-                $('#jsErrorText').text(stringMap[licenseRequest.requestType].failure);
+                console.error("Error:", responseData.detailedMessage);
+                $('#jsErrorText').text(responseData.friendlyMessage);
                 $('#jsError').show();
-
-            }
+                $(button).enabled = true;
+                requestInProgress=false;            }
         },
         error: function (error) {
-            console.log("Error:", error);
+            console.error("Error:", error);
             $('#jsErrorText').text(stringMap[licenseRequest.requestType].failure);
             $('#jsError').show();
+            $(button).enabled = true;
+                            requestInProgress=false;
         }
     });
 }

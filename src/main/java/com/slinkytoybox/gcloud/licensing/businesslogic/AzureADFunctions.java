@@ -30,10 +30,19 @@ import org.springframework.stereotype.Component;
 @Component
 public class AzureADFunctions {
 
-    Boolean addUserToGroup(String upn, String groupName) {
+    boolean addUserToGroup(String upn, String groupName) {
         final String logPrefix = "addUserToGroup() - ";
         log.trace("{}Entering Method", logPrefix);
+        log.info("{}Adding {} to Azure Group {}", logPrefix, upn, groupName);
+//TODO: Implement this
+        return true;
+    }
 
+    boolean removeUserFromGroup(String upn, String groupName) {
+        final String logPrefix = "addUserToGroup() - ";
+        log.trace("{}Entering Method", logPrefix);
+        log.info("{}Removing {} from Azure Group {}", logPrefix, upn, groupName);
+//TODO: Implement this
         return true;
     }
 

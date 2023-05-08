@@ -98,7 +98,7 @@ public class ApiController {
 
     @PostMapping(path = "/modifyLicense", produces = "application/json", consumes = "application/json")
     public ResponseEntity<BooleanResponse> modifyLicense(Principal principal, @RequestBody UserLicenseRequest licenseRequest) {
-        final String logPrefix = "newLicense() - ";
+        final String logPrefix = "modifyLicense() - ";
         log.trace("{}Entering Method", logPrefix);
         log.info("{}Processing POST for /modifyLicense for {} -> {}", logPrefix, principal.getName(), licenseRequest);
         BooleanResponse resp = new BooleanResponse();

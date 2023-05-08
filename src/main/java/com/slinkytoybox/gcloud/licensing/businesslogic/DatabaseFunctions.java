@@ -48,18 +48,19 @@ public class DatabaseFunctions {
     @Autowired
     private CloudDatabaseConnection cdc;
 
-    Map<Long, LicenseDTO> getLicenseFromDB(String upn) {
-        final String logPrefix = "getLicenseFromDB() - ";
+    Map<Long, LicenseDTO> getUserLicensesFromDB(String upn) {
+        final String logPrefix = "getUserLicensesFromDB() - ";
         log.trace("{}Entering Method", logPrefix);
         Map<Long, LicenseDTO> licenses = new HashMap<>();
 
         log.info("{}Looking up existing licenses for {}", logPrefix, upn);
-        String platformSql = "SELECT LIC.Id, LIC.LicenseIssueDateTime, LIC.LicenseExpiryDateTime, U.UPN, LIC.CloudPlatformID FROM LIC_ISSUED_LICENSE LIC"
-                + " INNER JOIN PROV_USER U ON U.Id = LIC.UserId"
+        String sql = "SELECT LIC.Id, LIC.LicenseIssueDateTime, LIC.LicenseExpiryDateTime, U.UPN, LIC.CloudPlatformID FROM LIC_ISSUED_LICENSE LIC\n"
+                + " INNER JOIN PROV_USER U ON U.Id = LIC.UserId\n"
                 + " WHERE U.UPN = ?";
         try (Connection dbConnection = cdc.getDatabaseConnection()) {
-            try (PreparedStatement ps = dbConnection.prepareStatement(platformSql)) {
+            try (PreparedStatement ps = dbConnection.prepareStatement(sql)) {
                 ps.setNString(1, upn);
+                traceLogSql(logPrefix, sql, upn);
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
                         LicenseDTO dto = new LicenseDTO()
@@ -87,14 +88,15 @@ public class DatabaseFunctions {
         List<PlatformDTO> platforms = new ArrayList<>();
 
         log.info("{}Looking up available platforms for {}", logPrefix, upn);
-        String platformSql = "SELECT CP.Id, CP.Name, CP.OrganisationName, CP.OrganisationId FROM COM_CLOUD_PLATFORM CP"
-                + " INNER JOIN PROV_USER_TYPE UT ON CP.Id = UT.CloudPlatformId "
-                + " INNER JOIN PROV_MAP_USER_TO_USER_TYPE UTM ON UT.Id = UTM.UserTypeId AND UTM.CloudPlatformId = CP.Id"
-                + " INNER JOIN PROV_USER U ON U.Id = UTM.UserId"
+        String sql = "SELECT CP.Id, CP.Name, CP.OrganisationName, CP.OrganisationId FROM COM_CLOUD_PLATFORM CP\n"
+                + " INNER JOIN PROV_USER_TYPE UT ON CP.Id = UT.CloudPlatformId \n"
+                + " INNER JOIN PROV_MAP_USER_TO_USER_TYPE UTM ON UT.Id = UTM.UserTypeId AND UTM.CloudPlatformId = CP.Id\n"
+                + " INNER JOIN PROV_USER U ON U.Id = UTM.UserId\n"
                 + " WHERE U.UPN = ? AND CP.Enabled=1";
         try (Connection dbConnection = cdc.getDatabaseConnection()) {
-            try (PreparedStatement ps = dbConnection.prepareStatement(platformSql)) {
+            try (PreparedStatement ps = dbConnection.prepareStatement(sql)) {
                 ps.setNString(1, upn);
+                traceLogSql(logPrefix, sql, upn);
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
                         PlatformDTO dto = new PlatformDTO()
@@ -119,14 +121,15 @@ public class DatabaseFunctions {
         log.trace("{}Entering Method", logPrefix);
 
         log.info("{}Getting in-use license counts", logPrefix);
-        String platformSql = "SELECT LIC_LICENSE_GROUP.ID, LIC_LICENSE_GROUP.NAME, COUNT(LIC_ISSUED_LICENSE.ID) InUse"
-                + " FROM LIC_LICENSE_GROUP LEFT JOIN LIC_ISSUED_LICENSE ON LIC_LICENSE_GROUP.ID = LIC_ISSUED_LICENSE.LicenseGroupId"
+        String sql = "SELECT LIC_LICENSE_GROUP.ID, LIC_LICENSE_GROUP.NAME, COUNT(LIC_ISSUED_LICENSE.ID) InUse\n"
+                + " FROM LIC_LICENSE_GROUP LEFT JOIN LIC_ISSUED_LICENSE ON LIC_LICENSE_GROUP.ID = LIC_ISSUED_LICENSE.LicenseGroupId\n"
                 + " GROUP BY LIC_LICENSE_GROUP.ID,LIC_LICENSE_GROUP.Name ORDER BY LIC_LICENSE_GROUP.ID";
 
         Map<Long, Long> licenseCountMap = new HashMap<>();
 
         try (Connection dbConnection = cdc.getDatabaseConnection()) {
-            try (PreparedStatement ps = dbConnection.prepareStatement(platformSql)) {
+            try (PreparedStatement ps = dbConnection.prepareStatement(sql)) {
+                traceLogSql(logPrefix, sql);
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
                         Long groupId = rs.getLong("ID");
@@ -150,7 +153,7 @@ public class DatabaseFunctions {
         log.trace("{}Entering Method", logPrefix);
 
         log.info("{}Getting in-use license counts", logPrefix);
-        String platformSql = "SELECT U.Id USERID, U.FullName USERFULLNAME, UT.NAME USERTYPENAME, LG.Name LicenseGroupName, LG.Id LicenseGroupId, LG.SoftLimit, LG.HardLimit, LG.DefaultIssueSeconds, LG.ExtensionTimeSeconds FROM PROV_USER U \n"
+        String sql = "SELECT U.Id USERID, U.FullName USERFULLNAME, UT.NAME USERTYPENAME, LG.Name LicenseGroupName, LG.Id LicenseGroupId, LG.SoftLimit, LG.HardLimit, LG.DefaultIssueSeconds, LG.ExtensionTimeSeconds FROM PROV_USER U \n"
                 + "INNER JOIN PROV_MAP_USER_TO_USER_TYPE UTM ON U.ID = UTM.UserId\n"
                 + "INNER JOIN PROV_USER_TYPE UT ON UTM.UserTypeId = UT.ID AND UTM.CloudPlatformId = UT.CloudPlatformId\n"
                 + "INNER JOIN LIC_LICENSE_GROUP LG ON UT.LicenseGroupId = LG.ID\n"
@@ -159,9 +162,10 @@ public class DatabaseFunctions {
         Map<String, Object> licenseGroupMap = new HashMap<>();
 
         try (Connection dbConnection = cdc.getDatabaseConnection()) {
-            try (PreparedStatement ps = dbConnection.prepareStatement(platformSql)) {
+            try (PreparedStatement ps = dbConnection.prepareStatement(sql)) {
                 ps.setNString(1, upn);
                 ps.setLong(2, cloudPlatformId);
+                traceLogSql(logPrefix, sql, upn, cloudPlatformId);
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
                         licenseGroupMap.put("USERID", rs.getLong("USERID"));
@@ -190,29 +194,33 @@ public class DatabaseFunctions {
         return licenseGroupMap;
     }
 
-    Boolean writeLicenseToDatabase(Long userId, Long licenseGroupId, Long cloudPlatformId, LocalDateTime expiryDateTime) {
+    boolean writeLicenseToDatabase(Long userId, Long licenseGroupId, Long cloudPlatformId, LocalDateTime expiryDateTime) {
 
-        final String logPrefix = "getUserLicenseGroupDetails() - ";
+        final String logPrefix = "writeLicenseToDatabase() - ";
         log.trace("{}Entering Method", logPrefix);
         log.info("{}Writing license to database", logPrefix);
-        String insertSql = "INSERT INTO LIC_ISSUED_LICENSE "
-                + "  (ID, USERID, LICENSEGROUPID, LICENSEISSUEDATETIME, LICENSEEXPIRYDATETIME, CLOUDPLATFORMID)"
-                + " VALUES"
-                + "  (NEXT VALUE FOR SEQ_LIC_ISSUED_LICENSE, ?, ?, GETDATE(), ?, ?)";
+        String sql = "INSERT INTO LIC_ISSUED_LICENSE\n "
+                + "  (ID, USERID, LICENSEGROUPID, LICENSEISSUEDATETIME, LICENSEEXPIRYDATETIME, CLOUDPLATFORMID)\n"
+                + " VALUES\n"
+                + "  (NEXT VALUE FOR SEQ_LIC_ISSUED_LICENSE, ?, ?, GETDATE(), ?, ?)\n";
 
         try (Connection dbConnection = cdc.getDatabaseConnection()) {
-            try (PreparedStatement ps = dbConnection.prepareStatement(insertSql)) {
+            dbConnection.setAutoCommit(false);
+            try (PreparedStatement ps = dbConnection.prepareStatement(sql)) {
                 ps.setLong(1, userId);
                 ps.setLong(2, licenseGroupId);
                 ps.setTimestamp(3, Timestamp.valueOf(expiryDateTime));
                 ps.setLong(4, cloudPlatformId);
+                traceLogSql(logPrefix, sql, userId, licenseGroupId, expiryDateTime, cloudPlatformId);
                 int rows = ps.executeUpdate();
                 if (rows == 1) {
                     log.debug("{}Successfully wrote {} rows to the database", logPrefix, rows);
+                    dbConnection.commit();
                     return true;
                 }
                 else {
                     log.error("{}A total of {} rows were written. This should have been 1.", logPrefix, rows);
+                    dbConnection.rollback();
                     return false;
                 }
             }
@@ -221,6 +229,116 @@ public class DatabaseFunctions {
             log.error("{}SQL Exception encountered", logPrefix, ex);
             return false;
         }
+    }
+
+    boolean extendLicense(Long licenseId, LocalDateTime expiryDateTime) {
+
+        final String logPrefix = "extendLicense() - ";
+        log.trace("{}Entering Method", logPrefix);
+        log.info("{}Extending license in database", logPrefix);
+        String sql = "UPDATE LIC_ISSUED_LICENSE \n"
+                + "  SET LICENSEEXPIRYDATETIME=?\n"
+                + " WHERE ID = ?";
+
+        try (Connection dbConnection = cdc.getDatabaseConnection()) {
+            dbConnection.setAutoCommit(false);
+            try (PreparedStatement ps = dbConnection.prepareStatement(sql)) {
+                ps.setTimestamp(1, Timestamp.valueOf(expiryDateTime));
+                ps.setLong(2, licenseId);
+                traceLogSql(logPrefix, sql, expiryDateTime, licenseId);
+                int rows = ps.executeUpdate();
+                if (rows == 1) {
+                    log.debug("{}Successfully updated {} rows in the database", logPrefix, rows);
+                    dbConnection.commit();
+                    return true;
+                }
+                else {
+                    log.error("{}A total of {} rows were updated. This should have been 1.", logPrefix, rows);
+                    dbConnection.rollback();
+                    return false;
+                }
+            }
+        }
+        catch (SQLException ex) {
+            log.error("{}SQL Exception encountered", logPrefix, ex);
+            return false;
+        }
+    }
+
+    boolean deleteLicense(Long licenseId) {
+
+        final String logPrefix = "deleteLicense() - ";
+        log.trace("{}Entering Method", logPrefix);
+        log.info("{}Deleting license from database", logPrefix);
+        String sql = "DELETE FROM LIC_ISSUED_LICENSE WHERE ID = ?";
+
+        try (Connection dbConnection = cdc.getDatabaseConnection()) {
+            dbConnection.setAutoCommit(false);
+            try (PreparedStatement ps = dbConnection.prepareStatement(sql)) {
+                ps.setLong(1, licenseId);
+                traceLogSql(logPrefix, sql, licenseId);
+
+                int rows = ps.executeUpdate();
+                if (rows == 1) {
+                    log.debug("{}Successfully deleted {} rows in the database", logPrefix, rows);
+                    dbConnection.commit();
+                    return true;
+                }
+                else {
+                    log.error("{}A total of {} rows were deleted. This should have been 1.", logPrefix, rows);
+                    dbConnection.rollback();
+                    return false;
+                }
+            }
+        }
+        catch (SQLException ex) {
+            log.error("{}SQL Exception encountered", logPrefix, ex);
+            return false;
+        }
+    }
+
+    LicenseDTO getLicenseFromDB(Long licenseId) {
+        final String logPrefix = "getLicenseFromDB() - ";
+        log.trace("{}Entering Method", logPrefix);
+
+        log.info("{}Looking up license {}", logPrefix, licenseId);
+        String sql = "SELECT LIC.Id, LIC.LicenseIssueDateTime, LIC.LicenseExpiryDateTime, U.UPN, LIC.CloudPlatformID FROM LIC_ISSUED_LICENSE LIC\n"
+                + " INNER JOIN PROV_USER U ON U.Id = LIC.UserId\n"
+                + " WHERE LIC.Id = ?";
+        try (Connection dbConnection = cdc.getDatabaseConnection()) {
+            try (PreparedStatement ps = dbConnection.prepareStatement(sql)) {
+                ps.setLong(1, licenseId);
+                traceLogSql(logPrefix, sql, licenseId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        LicenseDTO dto = new LicenseDTO()
+                                .setId(rs.getLong("Id"))
+                                .setCloudPlatformId(rs.getLong("CloudPlatformId"))
+                                .setExpiryDate(rs.getTimestamp("LicenseExpiryDateTime").toLocalDateTime())
+                                .setIssueDate(rs.getTimestamp("LicenseIssueDateTime").toLocalDateTime())
+                                .setUpn(rs.getNString("UPN"));
+
+                        log.debug("{}Got a license {}", logPrefix, dto);
+                        return dto;
+                    }
+                }
+            }
+        }
+        catch (SQLException ex) {
+            log.error("{}SQL Exception encountered", logPrefix, ex);
+        }
+        return null;
+    }
+
+    private void traceLogSql(String logPrefix, String sql, Object... parameters) {
+        int parameterId = 0;
+        String parameterList = "";
+        for (Object parameter : parameters) {
+            parameterId++;
+            parameterList += " [" + parameterId + "] : [" + parameter.toString() + "]\n";
+        }
+        log.trace("{}SQL Log:\n[{}]\n{}", logPrefix, sql, parameterList);
+
     }
 
 }

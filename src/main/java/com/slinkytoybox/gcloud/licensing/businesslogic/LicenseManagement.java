@@ -23,8 +23,10 @@ import com.slinkytoybox.gcloud.licensing.dto.internal.AlertMessage;
 import com.slinkytoybox.gcloud.licensing.dto.internal.LicenseDTO;
 import com.slinkytoybox.gcloud.licensing.dto.response.*;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -206,40 +208,206 @@ public class LicenseManagement {
             throw new IllegalArgumentException("UPN cannot be null or empty");
         }
 
-        Map<Long, LicenseDTO> licenses = dbFunc.getLicenseFromDB(upn);
+        Map<Long, LicenseDTO> licenses = dbFunc.getUserLicensesFromDB(upn);
         log.info("{}Found a total of {} issued licenses for user {}", logPrefix, licenses.size(), upn);
         return licenses;
 
     }
 
-    // Extend license
-    public BooleanResponse extendUserLicense(Long licenseId) {
-        final String logPrefix = "extendUserLicense() - ";
+    // check to see if a user owns a particular license
+    private Boolean checkUserOwnsLicense(String upn, Long licenseId) {
+        final String logPrefix = "checkUserOwnsLicense() - ";
         log.trace("{}Entering Method", logPrefix);
         if (licenseId == null || licenseId == 0) {
             log.error("{}licenseId cannot be null or zero", logPrefix);
             throw new IllegalArgumentException("licenseId cannot be null or zero");
         }
+        if (upn == null || upn.isBlank()) {
+            log.error("{}UPN cannot be null or empty", logPrefix);
+            throw new IllegalArgumentException("UPN cannot be null or empty");
+        }
+        log.info("{}Checking if user: {} owns license ID {}", logPrefix);
+
+        LicenseDTO license = dbFunc.getLicenseFromDB(licenseId);
+        if (license == null) {
+            log.warn("{}License does not exist", logPrefix);
+            return false;
+        }
+
+        if (license.getUpn().equals(upn)) {
+            log.info("{}License {} is valid for user {}", logPrefix, license, upn);
+            return true;
+        }
+
+        log.warn("{}The license for ID {} is not associated to user {}", logPrefix, licenseId, upn);
+        return false;
+
+    }
+
+    // Extend license
+    public BooleanResponse extendUserLicense(String upn, Long licenseId) {
+        final String logPrefix = "extendUserLicense(S,L) - ";
+        log.trace("{}Entering Method", logPrefix);
+        if (licenseId == null || licenseId == 0) {
+            log.error("{}licenseId cannot be null or zero", logPrefix);
+            throw new IllegalArgumentException("licenseId cannot be null or zero");
+        }
+        if (upn == null || upn.isBlank()) {
+            log.error("{}UPN cannot be null or empty", logPrefix);
+            throw new IllegalArgumentException("UPN cannot be null or empty");
+        }
+
+        BooleanResponse response = new BooleanResponse();
+
+        if (!checkUserOwnsLicense(upn, licenseId)) {
+            response.setSuccess(false)
+                    .setFriendlyMessage("The license you are trying to extend is invalid")
+                    .setDetailedMessage("User does not own license ID #" + licenseId + "");
+            return response;
+        }
+
+        return extendUserLicense(licenseId);
+    }
+
+    // Return License
+    public BooleanResponse returnUserLicense(String upn, Long licenseId) {
+        final String logPrefix = "returnUserLicense(S,L) - ";
+        log.trace("{}Entering Method", logPrefix);
+        if (licenseId == null || licenseId == 0) {
+            log.error("{}licenseId cannot be null or zero", logPrefix);
+            throw new IllegalArgumentException("licenseId cannot be null or zero");
+        }
+        if (upn == null || upn.isBlank()) {
+            log.error("{}UPN cannot be null or empty", logPrefix);
+            throw new IllegalArgumentException("UPN cannot be null or empty");
+        }
+
+        BooleanResponse response = new BooleanResponse();
+
+        if (!checkUserOwnsLicense(upn, licenseId)) {
+            response.setSuccess(false)
+                    .setFriendlyMessage("The license you are trying to return is invalid")
+                    .setDetailedMessage("User does not own license ID #" + licenseId + "");
+            return response;
+        }
+
+        return returnUserLicense(licenseId);
+    }
+
+    // Extend license
+    public BooleanResponse extendUserLicense(Long licenseId) {
+        final String logPrefix = "extendUserLicense(L) - ";
+        log.trace("{}Entering Method", logPrefix);
+        if (licenseId == null || licenseId == 0) {
+            log.error("{}licenseId cannot be null or zero", logPrefix);
+            throw new IllegalArgumentException("licenseId cannot be null or zero");
+        }
+
         BooleanResponse response = new BooleanResponse();
 
         log.info("{}Extending license {}", logPrefix, licenseId);
+        LicenseDTO license = dbFunc.getLicenseFromDB(licenseId);
+        LocalDateTime currentExpiry = license.getExpiryDate();
+        if (currentExpiry.isBefore(LocalDateTime.now())) {
+            log.error("{}Not renewing expired license!", logPrefix);
+            response.setSuccess(false)
+                    .setFriendlyMessage("Your license has expired and cannot be renewed")
+                    .setDetailedMessage("License expired at " + currentExpiry.format(DateTimeFormatter.ISO_DATE_TIME) + " - current time is " + LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
+            return response;
+        }
+        String upn = license.getUpn();
+        Long cloudPlatformId = license.getCloudPlatformId();
+        log.debug("{}Getting license group details", logPrefix);
+        Map<String, Object> licenseGroupDetails = dbFunc.getUserLicenseGroupDetails(upn, cloudPlatformId);
+        if (licenseGroupDetails == null) {
+            response.setFriendlyMessage("Your account is not configured correctly. Please contact your team leader.");
+            response.setDetailedMessage("Unable to retrieve license group details");
+            response.setSuccess(false);
+            AlertMessage am = new AlertMessage()
+                    .setSubject("GCloud Licensing - User not configured")
+                    .setMessage("User: " + upn + " is not configured and could not extend their license")
+                    .setSource("LicenseManagement.createUserLicense()")
+                    .setDetails("Cloud Platform ID " + cloudPlatformId + " | License Group ID: null");
+            alertFunc.alertPlatformAdmins(am);
+            return response;
+        }
 
+        Long secondsToAdd = (Long) licenseGroupDetails.get("EXTENSIONTIMESECONDS");
+        LocalDateTime newExpiry = currentExpiry.plusSeconds(secondsToAdd);
+        log.debug("{}Setting new expiry {}", logPrefix, newExpiry.format(DateTimeFormatter.ISO_DATE_TIME));
+        log.debug("{}About to write to database", logPrefix);
+        if (dbFunc.extendLicense(licenseId, newExpiry)) {
+            response.setSuccess(true);
+            return response;
+        }
+
+        response.setSuccess(false)
+                .setDetailedMessage("Error extending license in database")
+                .setFriendlyMessage("There was an error extending your license");
         return response;
     }
 
     // Return License
     public BooleanResponse returnUserLicense(Long licenseId) {
-        final String logPrefix = "returnUserLicense() - ";
+        final String logPrefix = "returnUserLicense(L,B) - ";
         log.trace("{}Entering Method", logPrefix);
         if (licenseId == null || licenseId == 0) {
             log.error("{}licenseId cannot be null or zero", logPrefix);
             throw new IllegalArgumentException("licenseId cannot be null or zero");
         }
+
         BooleanResponse response = new BooleanResponse();
 
         log.info("{}Returning license {}", logPrefix, licenseId);
 
-        return response;
+        LicenseDTO license = dbFunc.getLicenseFromDB(licenseId);
+        String upn = license.getUpn();
+        Long cloudPlatformId = license.getCloudPlatformId();
+        log.debug("{}Getting license group details", logPrefix);
+        Map<String, Object> licenseGroupDetails = dbFunc.getUserLicenseGroupDetails(upn, cloudPlatformId);
+        if (licenseGroupDetails == null) {
+            response.setFriendlyMessage("Your account is not configured correctly. Please contact your team leader.");
+            response.setDetailedMessage("Unable to retrieve license group details");
+            response.setSuccess(false);
+            AlertMessage am = new AlertMessage()
+                    .setSubject("GCloud Licensing - User not configured")
+                    .setMessage("User: " + upn + " is not configured and could not extend their license")
+                    .setSource("LicenseManagement.createUserLicense()")
+                    .setDetails("Cloud Platform ID " + cloudPlatformId + " | License Group ID: null");
+            alertFunc.alertPlatformAdmins(am);
+            return response;
+        }
+
+        // Remove from AD Group
+        log.debug("{}About to remove user from AD Group", logPrefix);
+        if (!adFunc.removeUserFromGroup(upn, "")) {
+            response.setSuccess(false)
+                    .setDetailedMessage("Error removing user from AureAD Group")
+                    .setFriendlyMessage("There was an error returning your license");
+            return response;
+        }
+
+        // Log out agent
+        log.debug("{}About to force user out of Genesys", logPrefix);
+        if (!cloudFunc.forceLogOutUser(upn)) {
+            response.setSuccess(false)
+                    .setDetailedMessage("Error logging user out of Cloud")
+                    .setFriendlyMessage("There was an error returning your license");
+            return response;
+        }
+
+        // Delete from Database
+        log.debug("{}About to delete from database", logPrefix);
+        if (dbFunc.deleteLicense(licenseId)) {
+            response.setSuccess(true);
+            return response;
+        }
+        else {
+            response.setSuccess(false)
+                    .setDetailedMessage("Error deleting license from database")
+                    .setFriendlyMessage("There was an error returning your license");
+            return response;
+        }
     }
 
     // Get User Platforms

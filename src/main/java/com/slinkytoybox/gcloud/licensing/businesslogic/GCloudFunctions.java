@@ -1,4 +1,4 @@
-/*
+    /*
  *   gcloudlicensemanagement - GCloudFunctions.java
  *
  *   Copyright (c) 2022-2023, Slinky Software
@@ -31,11 +31,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Slf4j
 public class GCloudFunctions {
-    
+
     @Autowired
     private GCloudAPIConnection cloudApi;
-    
-    
+
     String getAzureAdAccessGroup(Long cloudPlatformId) {
         final String logPrefix = "getCloudAzureAdControlGroup() - ";
         log.trace("{}Entering Method", logPrefix);
@@ -43,10 +42,19 @@ public class GCloudFunctions {
             log.error("{}Cloud Platform ID {} is not registered", logPrefix);
             throw new IllegalArgumentException("Cloud platform is not registered");
         }
-        
+
         return cloudApi.getCloudPlatform(cloudPlatformId).getAzureAdAccessGroup();
-        
+
     }
-    
-    
+
+    boolean forceLogOutUser(String upn) {
+        final String logPrefix = "forceLogOutUser() - ";
+        log.trace("{}Entering Method", logPrefix);
+        log.info("{}Force logging out {}", logPrefix, upn);
+
+//TODO: Finish this function
+        return true;
+
+    }
+
 }
