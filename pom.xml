@@ -119,6 +119,7 @@
             <artifactId>microsoft-graph</artifactId>
             <version>${microsoftgraph.version}</version>
         </dependency>
+        
         <dependency>
             <groupId>com.microsoft.azure</groupId>
             <artifactId>adal4j</artifactId>

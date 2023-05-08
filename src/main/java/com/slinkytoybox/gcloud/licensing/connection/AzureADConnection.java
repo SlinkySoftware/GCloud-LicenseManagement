@@ -25,12 +25,15 @@ import com.microsoft.graph.authentication.TokenCredentialAuthProvider;
 import com.microsoft.graph.models.Organization;
 import com.microsoft.graph.requests.GraphServiceClient;
 import com.microsoft.graph.requests.OrganizationCollectionPage;
+import com.slinkytoybox.gcloud.licensing.init.PlatformEncryption;
 import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 /**
@@ -53,7 +56,13 @@ public class AzureADConnection {
 
     @Value("${azure.graph.tenant-id:NOT_SET}")
     private String tenantId;
-
+    
+    @Autowired
+    private PlatformEncryption pe;
+    
+    @Autowired
+    private Environment env;
+    
     private GraphServiceClient graphClient;
 
     @PostConstruct
@@ -61,6 +70,8 @@ public class AzureADConnection {
         final String logPrefix = "startAzureAd() - ";
         log.trace("{}Entering Method", logPrefix);
 
+        String pfxPassword = env.getProperty("azure.graph.pfx-password", "NOT_SET");
+        
         if (pfxFile.equalsIgnoreCase("NOT_SET") || pfxPassword.equalsIgnoreCase("NOT_SET") || clientId.equalsIgnoreCase("NOT_SET")
                 || tenantId.equalsIgnoreCase("NOT_SET")) {
             log.error("{}Microsoft Azure Graph paramaters 'azure.graph.pfx-file|pfx-password|client-id|tenant-id' are not defined correctly", logPrefix);
@@ -71,7 +82,7 @@ public class AzureADConnection {
 
         log.trace("{}Creating token credential", logPrefix);
         final TokenCredential credential = new ClientCertificateCredentialBuilder()
-                .pfxCertificate(pfxFile, pfxPassword)
+                .pfxCertificate(pfxFile, pe.decrypt(pfxPassword))
                 .clientId(clientId)
                 .tenantId(tenantId)
                 .build();

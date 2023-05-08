@@ -138,6 +138,7 @@ public class LicenseManagement {
 
         // update AzureAd Group
         String groupName = cloudFunc.getAzureAdAccessGroup(cloudPlatformId);
+        log.trace("{}Find Azure group '{}' for PlatformID: {}", logPrefix, groupName, cloudPlatformId);
 
         if (groupName != null && !groupName.isBlank()) {
             Boolean success = adFunc.addUserToGroup(upn, groupName);
@@ -380,11 +381,34 @@ public class LicenseManagement {
 
         // Remove from AD Group
         log.debug("{}About to remove user from AD Group", logPrefix);
-        if (!adFunc.removeUserFromGroup(upn, "")) {
-            response.setSuccess(false)
-                    .setDetailedMessage("Error removing user from AureAD Group")
-                    .setFriendlyMessage("There was an error returning your license");
-            return response;
+        String groupName = cloudFunc.getAzureAdAccessGroup(cloudPlatformId);
+        log.trace("{}Find Azure group '{}' for PlatformID: {}", logPrefix, groupName, cloudPlatformId);
+
+        if (groupName != null && !groupName.isBlank()) {
+            Boolean success = adFunc.removeUserFromGroup(upn, groupName);
+            if (!success) {
+                log.error("{}An error occurred removing the user from the AD group", logPrefix);
+                response.setFriendlyMessage("A system error occurred returning this license. Please contact your team leader.");
+                response.setDetailedMessage("AzureAD removeUserFromGroup function returned error");
+                response.setSuccess(false);
+                AlertMessage am = new AlertMessage()
+                        .setSubject("GCloud Licensing - AzureAD Group Removal Failed")
+                        .setMessage("User: " + upn + " could not be removed from to AzureAD group " + groupName)
+                        .setSource("LicenseManagement.createUserLicense()")
+                        .setDetails(
+                                "Cloud Platform ID: " + cloudPlatformId
+                                + " | License Group ID: " + (Long) licenseGroupDetails.get("LICENSEGROUPID")
+                                + " | User UPN: " + upn
+                                + " | User Name: " + (String) licenseGroupDetails.get("USERFULLNAME")
+                                + " | User Type: " + (String) licenseGroupDetails.get("USERTYPENAME")
+                                + " | Azure AD Group: " + groupName
+                        );
+                alertFunc.alertPlatformAdmins(am);
+                return response;
+            }
+        }
+        else {
+            log.warn("{}No AzureAd group defined for Cloud Platform {}. Not removing user from the group", logPrefix, cloudPlatformId);
         }
 
         // Log out agent
