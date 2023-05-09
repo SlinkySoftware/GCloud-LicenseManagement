@@ -94,7 +94,8 @@ public class AzureADFunctions {
         }
 
         Group adGroup = groupList.get(0);
-        log.trace("{}Found GroupID: {} for GRoup Name {}", logPrefix, adGroup.id, adGroup.displayName);
+        
+        log.trace("{}Found GroupID: {} for Group Name {}", logPrefix, adGroup.id, adGroup.displayName);
 
         log.debug("{}Getting list of current members in group", logPrefix);
         UserCollectionPage ucp = graphClient.groups(adGroup.id).membersAsUser().buildRequest().get();
@@ -145,8 +146,8 @@ public class AzureADFunctions {
             DirectoryObject dObj = new DirectoryObject();
             dObj.id = adUser.id;
             try {
-                graphClient.groups(adGroup.id).members().references().buildRequest().post(dObj);
-                log.info("{}Successfully added {}", logPrefix, upn);
+                DirectoryObject returnObj = graphClient.groups(adGroup.id).members().references().buildRequest().post(dObj);
+                log.info("{}Successfully added {} -> {}", logPrefix, upn, returnObj);
                 return true;
             }
             catch (ClientException ex) {
