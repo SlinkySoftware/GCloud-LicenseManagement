@@ -413,7 +413,7 @@ public class LicenseManagement {
 
         // Log out agent
         log.debug("{}About to force user out of Genesys", logPrefix);
-        if (!cloudFunc.forceLogOutUser(upn)) {
+        if (!cloudFunc.forceLogOutUser(upn, cloudPlatformId)) {
             response.setSuccess(false)
                     .setDetailedMessage("Error logging user out of Cloud")
                     .setFriendlyMessage("There was an error returning your license");

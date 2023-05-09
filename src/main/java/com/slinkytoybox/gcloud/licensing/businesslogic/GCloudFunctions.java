@@ -1,4 +1,4 @@
-    /*
+/*
  *   gcloudlicensemanagement - GCloudFunctions.java
  *
  *   Copyright (c) 2022-2023, Slinky Software
@@ -19,7 +19,18 @@
  */
 package com.slinkytoybox.gcloud.licensing.businesslogic;
 
+import com.mypurecloud.sdk.v2.ApiException;
+import com.mypurecloud.sdk.v2.api.TokensApi;
+import com.mypurecloud.sdk.v2.api.UsersApi;
+import com.mypurecloud.sdk.v2.model.User;
+import com.mypurecloud.sdk.v2.model.UserSearchCriteria;
+import com.mypurecloud.sdk.v2.model.UserSearchRequest;
+import com.mypurecloud.sdk.v2.model.UsersSearchResponse;
 import com.slinkytoybox.gcloud.licensing.connection.GCloudAPIConnection;
+import com.slinkytoybox.gcloud.licensing.genesys.CloudPlatform;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -47,12 +58,55 @@ public class GCloudFunctions {
 
     }
 
-    boolean forceLogOutUser(String upn) {
+    boolean forceLogOutUser(String upn, Long cloudPlatformId) {
         final String logPrefix = "forceLogOutUser() - ";
         log.trace("{}Entering Method", logPrefix);
-        log.info("{}Force logging out {}", logPrefix, upn);
+        log.info("{}Force logging out {} from platform {}", logPrefix, upn, cloudPlatformId);
+        CloudPlatform cp = cloudApi.getCloudPlatform(cloudPlatformId);
 
-//TODO: Finish this function
+        log.debug("{}Creating API Clients", logPrefix);
+        UsersApi userApi = new UsersApi(cp.getApiClient());
+        TokensApi tokenApi = new TokensApi(cp.getApiClient());
+        log.debug("{}Creating search request", logPrefix);
+        UserSearchRequest userSearch = new UserSearchRequest();
+        List<UserSearchCriteria> criteriaList = new ArrayList<>();
+        UserSearchCriteria usernameCriteria = new UserSearchCriteria();
+        List<String> fields = new ArrayList<>();
+        fields.add("username");
+        usernameCriteria.setFields(fields);
+        usernameCriteria.setValue(upn);
+        usernameCriteria.setType(UserSearchCriteria.TypeEnum.EXACT);
+        criteriaList.add(usernameCriteria);
+        userSearch.setQuery(criteriaList);
+        log.debug("{}Query formed: {}", logPrefix, userSearch);
+
+        log.debug("{}About to send off API Search Requst for user");
+        UsersSearchResponse userResult;
+        try {
+            userResult = userApi.postUsersSearch(userSearch);
+        }
+        catch (ApiException | IOException ex) {
+            log.error("{}Exception encountered searching for Genesys Cloud user", logPrefix, ex);
+            return false;
+        }
+        if (userResult.getTotal() != 1) {
+            log.error("{}Search found () users. Expected only one.", logPrefix, userResult.getTotal());
+            return false;
+        }
+        log.trace("{}Getting user result list and first/only entry", logPrefix);
+        List<User> resultList = userResult.getResults();
+        User foundUser = resultList.get(0);
+        log.debug("{}UPN Search {} found Genesys user ID {}", logPrefix, upn, foundUser.getId());
+
+        log.info("{}Deleting all authentication tokens for user {} ({})", logPrefix, upn, foundUser.getId());
+        try {
+            tokenApi.deleteToken(foundUser.getId());
+        }
+        catch (ApiException | IOException ex) {
+            log.error("{}Exception encountered removing all tokens", logPrefix, ex);
+            return false;
+        }
+
         return true;
 
     }
