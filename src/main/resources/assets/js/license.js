@@ -201,8 +201,8 @@ function revokeLicense(licenseId, rowid) {
         console.warn("Request in progress, not proceeding");
         return;
     }
-    $('#btnRevokeConfirm').data('license-id',licenseId);
-    $('#btnRevokeConfirm').data('row-id',rowid);
+    $('#btnRevokeConfirm').data('license-id', licenseId);
+    $('#btnRevokeConfirm').data('row-id', rowid);
     revokeModal.show();
 }
 
@@ -220,11 +220,11 @@ function completeRevoke() {
         return;
     }
     revokeModal.hide();
-    
+
     console.log("Revoking license", licenseId, "buttons on row", rowid);
-    $('#btnRevokeConfirm').data('NOT_SET',licenseId);
-    $('#btnRevokeConfirm').data('NOT_SET',rowid);
-    
+    $('#btnRevokeConfirm').data('NOT_SET', licenseId);
+    $('#btnRevokeConfirm').data('NOT_SET', rowid);
+
     if (debug)
         console.log("Revoking license", licenseId);
     if (requestInProgress) {
@@ -313,3 +313,10 @@ function performLicenseRequest(licenseRequest, rowid) {
 }
 
 
+let refreshId = setInterval(refreshDataTable, 30000);
+
+function refreshDataTable() {
+    if (debug)
+        console.log("Refreshing data table on timer");
+    licenseTable.ajax.reload();
+}
