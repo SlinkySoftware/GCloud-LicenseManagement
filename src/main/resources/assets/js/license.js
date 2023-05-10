@@ -18,7 +18,7 @@
  *
  */
 
-let debug = true;
+
 let ajaxBase = contextPath + 'api/v1/';
 if (debug)
     console.log("AJAX Base:", ajaxBase);
@@ -28,6 +28,8 @@ let requestInProgress = false;
 let extendIconCss = 'fas fa-square-plus';
 let allocateIconCss = 'fas fa-up-right-from-square';
 let revokeIconCss = 'fas fa-flag-checkered';
+
+let revokeModal = new bootstrap.Modal(document.getElementById("revokeConfimDialog"), {});
 
 let licenseTable = $('#licenseTable').DataTable({
     "autoWidth": false,
@@ -199,9 +201,37 @@ function revokeLicense(licenseId, rowid) {
         console.warn("Request in progress, not proceeding");
         return;
     }
-    console.log("before css:", $("#revoke" + licenseId));
+    $('#btnRevokeConfirm').data('license-id',licenseId);
+    $('#btnRevokeConfirm').data('row-id',rowid);
+    revokeModal.show();
+}
+
+function cancelRevoke() {
+    if (debug)
+        console.log("Hiding revoke dialog");
+    revokeModal.hide();
+}
+
+function completeRevoke() {
+    console.log("Starting revocation. Checking dialog for identifiers");
+    let licenseId = $('#btnRevokeConfirm').data('license-id');
+    let rowid = $('#btnRevokeConfirm').data('row-id');
+    if (licenseId === "NOT_SET" || rowid === "NOT_SET") {
+        return;
+    }
+    revokeModal.hide();
+    
+    console.log("Revoking license", licenseId, "buttons on row", rowid);
+    $('#btnRevokeConfirm').data('NOT_SET',licenseId);
+    $('#btnRevokeConfirm').data('NOT_SET',rowid);
+    
+    if (debug)
+        console.log("Revoking license", licenseId);
+    if (requestInProgress) {
+        console.warn("Request in progress, not proceeding");
+        return;
+    }
     $("#iconRevoke" + licenseId).removeClass(revokeIconCss).addClass('spinner-border spinner-border-sm');
-    console.log("after css:", $("#revoke" + licenseId));
     requestInProgress = true;
     let licenseRequest = {
         "cloudPlatformId": null,
