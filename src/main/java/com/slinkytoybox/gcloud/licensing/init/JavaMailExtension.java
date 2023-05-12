@@ -45,7 +45,7 @@ public class JavaMailExtension {
     public JavaMailSenderImpl mailSender() {
         JavaMailSenderImpl javaMailSender = new JavaMailSenderImpl();
 
-        javaMailSender.setProtocol("SMTP");
+        javaMailSender.setProtocol("smtp");
         
         javaMailSender.setHost(env.getProperty("smtp.server"));
         javaMailSender.setPort(env.getProperty("smtp.port", Integer.class, 25));

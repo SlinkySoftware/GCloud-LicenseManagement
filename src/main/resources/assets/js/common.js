@@ -18,15 +18,6 @@
  *
  */
 
-$(document).ready(function () {
-    window.setTimeout(function () {
-        $(".alert-dismissible").fadeTo(2000, 500).slideUp(500, function () {
-            $(".alert-dismissible").alert('close');
-        });
-    }, 5000);
-
-});
-
 
 // Converts a Serialized Java LocalDateTime into a text format
 function localDateTimeArrayToYYYYMMDD_HHMMSS(data, dateSeparator, timeSeparator, dateTimeSeparator) {

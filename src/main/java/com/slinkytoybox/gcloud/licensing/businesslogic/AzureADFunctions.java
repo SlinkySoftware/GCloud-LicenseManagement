@@ -83,7 +83,7 @@ public class AzureADFunctions {
         log.debug("{}Got {} groups", logPrefix, groupList.size());
 
         if (groupList.size() != 1) {
-            log.warn("{}A single group was not returned");
+            log.warn("{}A single group was not returned", logPrefix);
             return false;
         }
 

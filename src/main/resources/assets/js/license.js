@@ -66,11 +66,8 @@ let licenseTable = $('#licenseTable').DataTable({
                 if (debug)
                     console.log("Rendering table row cell 4 for data", data);
                 if (row.licenseAllocated) {
-                    if (!row.expired) {
-                        //buttonHtml += '<button class="btn btn-outline-info" onclick="loadPlatform(\'' + row.organisationId + '\');"><span class="fas fa-right-to-bracket"></span> Log In</button>&nbsp;';
-                        if (row.canExtend) {
-                            buttonHtml += '<button class="btn btn-outline-warning btnLicense' + meta.row + '" onclick="extendLicense(\'' + data + '\', ' + meta.row + ');"><span class="' + extendIconCss + '" id="iconExtend' + data + '"></span> Extend</button>&nbsp;';
-                        }
+                    if (!row.expired && row.canExtend) {
+                        buttonHtml += '<button class="btn btn-outline-warning btnLicense' + meta.row + '" onclick="extendLicense(\'' + data + '\', ' + meta.row + ');"><span class="' + extendIconCss + '" id="iconExtend' + data + '"></span> Extend</button>&nbsp;';
                     }
                     buttonHtml += '<button class="btn btn-outline-danger btnLicense' + meta.row + '" onclick="revokeLicense(\'' + data + '\', ' + meta.row + ');"><span class="' + revokeIconCss + '" id="iconRevoke' + data + '"></span> Return</button>';
                 }
@@ -145,15 +142,6 @@ let stringMap = {
         failure: "An error was encountered whilst extending the license."
     }
 };
-
-
-
-
-//function loadPlatform(organisationId) {
-//    if (debug)
-//        console.log("Logging in to platform", organisationId);
-//    window.open('https://login.mypurecloud.com.au/#/authenticate-adv/org/' + organisationId, '_blank');
-//}
 
 
 function extendLicense(licenseId, rowid) {
@@ -264,7 +252,7 @@ function performLicenseRequest(licenseRequest, rowid) {
                 requestInProgress = false;
                 console.log("Adjusting icons for type", licenseRequest.requestType);
                 if (licenseRequest.requestType === "CREATE") {
-                    $("#iconAllocate" + licenseRequest.platformId).removeClass('spinner-border spinner-border-sm').addClass(allocateIconCss);
+                    $("#iconAllocate" + licenseRequest.cloudPlatformId).removeClass('spinner-border spinner-border-sm').addClass(allocateIconCss);
                 }
                 else if (licenseRequest.requestType === "REVOKE") {
                     $("#iconRevoke" + licenseRequest.licenseId).removeClass('spinner-border spinner-border-sm').addClass(revokeIconCss);
@@ -277,13 +265,13 @@ function performLicenseRequest(licenseRequest, rowid) {
                 licenseTable.ajax.reload();
             }
             else {
-                console.error("Error:", responseData.detailedMessage);
+                console.error("API Returned Error:", responseData.detailedMessage);
                 $('#jsErrorText').text(responseData.friendlyMessage);
                 $('#jsError').show();
                 button.prop('disabled', false);
                 requestInProgress = false;
                 if (licenseRequest.requestType === "CREATE") {
-                    $("#iconAllocate" + licenseRequest.platformId).removeClass('spinner-border spinner-border-sm').addClass(allocateIconCss);
+                    $("#iconAllocate" + licenseRequest.cloudPlatformId).removeClass('spinner-border spinner-border-sm').addClass(allocateIconCss);
                 }
                 else if (licenseRequest.requestType === "REVOKE") {
                     $("#iconRevoke" + licenseRequest.licenseId).removeClass('spinner-border spinner-border-sm').addClass(revokeIconCss);
@@ -294,13 +282,13 @@ function performLicenseRequest(licenseRequest, rowid) {
             }
         },
         error: function (error) {
-            console.error("Error:", error);
+            console.error("Error calling API:", error);
             $('#jsErrorText').text(stringMap[licenseRequest.requestType].failure);
             $('#jsError').show();
             button.prop('disabled', false);
             requestInProgress = false;
             if (licenseRequest.requestType === "CREATE") {
-                $("#iconAllocate" + licenseRequest.platformId).removeClass('spinner-border spinner-border-sm').addClass(allocateIconCss);
+                $("#iconAllocate" + licenseRequest.cloudPlatformId).removeClass('spinner-border spinner-border-sm').addClass(allocateIconCss);
             }
             else if (licenseRequest.requestType === "REVOKE") {
                 $("#iconRevoke" + licenseRequest.licenseId).removeClass('spinner-border spinner-border-sm').addClass(revokeIconCss);

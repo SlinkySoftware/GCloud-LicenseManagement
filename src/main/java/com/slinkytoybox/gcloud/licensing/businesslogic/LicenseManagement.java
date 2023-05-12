@@ -82,7 +82,7 @@ public class LicenseManagement {
                     .setMessage("User: " + upn + " is not configured and could not check out a license")
                     .setSource("LicenseManagement.createUserLicense()")
                     .setDetails("Cloud Platform ID " + cloudPlatformId + " | License Group ID: null");
-            ;
+            
             alertFunc.alertPlatformAdmins(am);
             return response;
         }
