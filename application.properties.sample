@@ -1,3 +1,36 @@
+### Cloud Management Database ###
+
+cloud.database.url=jdbc:sqlserver://mssqldb.example.com:1433
+cloud.database.username=windowsAuthUser
+cloud.database.password=ENC:<encryptedPassword>
+cloud.database.properties.databaseName=DATABASE_NAME
+cloud.database.properties.integratedSecurity=true
+cloud.database.properties.encrypt=false
+cloud.database.properties.domain=WindowsDomain.example.com
+cloud.database.properties.realm=WindowsDomain.example.com
+cloud.database.properties.authentication=NotSpecified
+cloud.database.properties.authenticationScheme=NTLM
+
+
+### Spring Session Management Database ###
+
+session-management.db.jdbc-url=jdbc:sqlserver://mssqldb.example.com:1433/
+session-management.db.username=databaseUser
+session-management.db.pass=ENC:<encryptedpassword>
+session-management.db.initializationFailTimeout=0
+session-management.db.data-source-properties.databaseName=DATABASE_NAME
+session-management.db.data-source-properties.integratedSecurity=false
+session-management.db.data-source-properties.encrypt=false
+#session-management.db.data-source-properties.domain=WindowsDomain.example.com
+#session-management.db.data-source-properties.realm=WindowsDomain.example.com
+#session-management.db.data-source-properties.authentication=NotSpecified
+#session-management.db.data-source-properties.authenticationScheme=NTLM
+
+
+### Encryption key ###
+
+secure.key=SuperSecureEncryptionKeyGoesHere
+
 
 ########################################
 #### SAML Authentication Parameters ####
@@ -5,43 +38,16 @@
 
 saml.sso.context-provider.lb.enabled = true
 saml.sso.context-provider.lb.scheme=https
-saml.sso.profile-options.relay-state=https://my-loadbalanced-hostname.my-domain.com
-
-## Okta
-#auth.saml.entity-id=http://www.okta.com/XXXXXXX
-#auth.saml.sso.url=https://sso.DOMAIN.com/app/dev-123456_applicationname_1/XXXXXX
-#auth.saml.registration-id=okta-saml
-#auth.saml.provider=okta
-#auth.saml.certificate=okta.cert
-#auth.saml.group-attribute=APP_ROLE
-#auth.saml.groupMapping.ROLE1=ApplicationName_ROLE1
-#auth.saml.groupMapping.ROLE2=ApplicationName_ROLE2
-#auth.saml.groupMapping.ROLE3=ApplicationName_ROLE3
-#auth.saml.groupMapping.ROLE4=ApplicationName_ROLE4
-
-## ADFS
-#auth.saml.entity-id=http://adfs.MY-DOMAIN.com/adfs/services/trust
-#auth.saml.sso.url=https://adfs.MY-DOMAIN.com/adfs/ls
-#auth.saml.registration-id=adfs
-#auth.saml.provider=adfs
-#auth.saml.certificate=adfs.cert
-#auth.saml.group-attribute=AD_GROUPS
-#auth.saml.signing=true
-#auth.saml.groupMapping.ROLE1=ADGRP_APPNAME_ROLE1
-#auth.saml.groupMapping.ROLE2=ADGRP_APPNAME_ROLE2
-#auth.saml.groupMapping.ROLE3=ADGRP_APPNAME_ROLE3
-#auth.saml.groupMapping.ROLE4=ADGRP_APPNAME_ROLE4
-
+saml.sso.profile-options.relay-state=https://licensemanagement.example.com
 
 ## AzureAD/office365
-auth.saml.entity-id=https://sts.windows.net/11111111-2222-3333-4444-555555555555/
-auth.saml.sso.url=https://login.microsoftonline.com/11111111-2222-3333-4444-555555555555/saml2
+auth.saml.entity-id=https://sts.windows.net/aaaaffff-bbbb-cccc-dddd-111122223333/
+auth.saml.sso.url=https://login.microsoftonline.com/aaaaffff-bbbb-cccc-dddd-111122223333/saml2
 auth.saml.registration-id=azuread
-auth.saml.certificate=azuread.cert
+auth.saml.certificate=azuread-app-certificate.cer
 auth.saml.provider=o365
 auth.saml.group-attribute=http://schemas.microsoft.com/ws/2008/06/identity/claims/role
 auth.saml.signing=true
-auth.saml.groupMapping.ROLE1=ROLE1
-auth.saml.groupMapping.ROLE2=ROLE2
-auth.saml.groupMapping.ROLE3=ROLE3
-auth.saml.groupMapping.ROLE4=ROLE4
+auth.saml.groupMapping.USER=GenesysCloudUser
+
+
