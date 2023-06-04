@@ -19,6 +19,7 @@
  */
 package com.slinkytoybox.gcloud.licensing.businesslogic;
 
+import com.slinkytoybox.gcloud.licensing.businesslogic.LicenseManagement.ReturnReason;
 import com.slinkytoybox.gcloud.licensing.connection.CloudDatabaseConnection;
 import com.slinkytoybox.gcloud.licensing.dto.internal.LicenseDTO;
 import com.slinkytoybox.gcloud.licensing.dto.response.PlatformDTO;
@@ -54,7 +55,7 @@ public class DatabaseFunctions {
         Map<Long, LicenseDTO> licenses = new HashMap<>();
 
         log.info("{}Looking up existing licenses for {}", logPrefix, upn);
-        String sql = "SELECT LIC.Id, LIC.LicenseIssueDateTime, LIC.LicenseExpiryDateTime, U.UPN, LIC.CloudPlatformID FROM LIC_ISSUED_LICENSE LIC\n"
+        String sql = "SELECT LIC.Id, LIC.LicenseIssueDateTime, LIC.LicenseExpiryDateTime, U.UPN, LIC.CloudPlatformID, LIC.LicenseGroupId, U.ID USERID FROM LIC_ISSUED_LICENSE LIC\n"
                 + " INNER JOIN PROV_USER U ON U.Id = LIC.UserId\n"
                 + " WHERE U.UPN = ?";
         try (Connection dbConnection = cdc.getDatabaseConnection()) {
@@ -68,6 +69,8 @@ public class DatabaseFunctions {
                                 .setCloudPlatformId(rs.getLong("CloudPlatformId"))
                                 .setExpiryDate(rs.getTimestamp("LicenseExpiryDateTime").toLocalDateTime())
                                 .setIssueDate(rs.getTimestamp("LicenseIssueDateTime").toLocalDateTime())
+                                .setLicenseGroupId(rs.getLong("LicenseGroupId"))
+                                .setUserId(rs.getLong("USERID"))
                                 .setUpn(upn);
 
                         log.debug("{}Got a license {}", logPrefix, dto);
@@ -153,7 +156,8 @@ public class DatabaseFunctions {
         log.trace("{}Entering Method", logPrefix);
 
         log.info("{}Getting in-use license counts", logPrefix);
-        String sql = "SELECT U.Id USERID, U.FullName USERFULLNAME, UT.NAME USERTYPENAME, LG.Name LicenseGroupName, LG.Id LicenseGroupId, LG.SoftLimit, LG.HardLimit, LG.DefaultIssueSeconds, LG.ExtensionTimeSeconds FROM PROV_USER U \n"
+        String sql = "SELECT U.Id USERID, U.FullName USERFULLNAME, UT.NAME USERTYPENAME, LG.Name LicenseGroupName, LG.Id LicenseGroupId,\n"
+                + "LG.SoftLimit, LG.HardLimit, LG.DefaultIssueSeconds, LG.ExtensionTimeSeconds FROM PROV_USER U \n"
                 + "INNER JOIN PROV_MAP_USER_TO_USER_TYPE UTM ON U.ID = UTM.UserId\n"
                 + "INNER JOIN PROV_USER_TYPE UT ON UTM.UserTypeId = UT.ID AND UTM.CloudPlatformId = UT.CloudPlatformId\n"
                 + "INNER JOIN LIC_LICENSE_GROUP LG ON UT.LicenseGroupId = LG.ID\n"
@@ -302,7 +306,8 @@ public class DatabaseFunctions {
         log.trace("{}Entering Method", logPrefix);
 
         log.info("{}Looking up license {}", logPrefix, licenseId);
-        String sql = "SELECT LIC.Id, LIC.LicenseIssueDateTime, LIC.LicenseExpiryDateTime, U.UPN, LIC.CloudPlatformID FROM LIC_ISSUED_LICENSE LIC\n"
+        String sql = "SELECT LIC.Id, LIC.LicenseIssueDateTime, LIC.LicenseExpiryDateTime, U.UPN, LIC.CloudPlatformID,\n"
+                + " LIC.LicenseGroupId, U.ID USERID FROM LIC_ISSUED_LICENSE LIC\n"
                 + " INNER JOIN PROV_USER U ON U.Id = LIC.UserId\n"
                 + " WHERE LIC.Id = ?";
         try (Connection dbConnection = cdc.getDatabaseConnection()) {
@@ -316,6 +321,8 @@ public class DatabaseFunctions {
                                 .setCloudPlatformId(rs.getLong("CloudPlatformId"))
                                 .setExpiryDate(rs.getTimestamp("LicenseExpiryDateTime").toLocalDateTime())
                                 .setIssueDate(rs.getTimestamp("LicenseIssueDateTime").toLocalDateTime())
+                                .setLicenseGroupId(rs.getLong("LicenseGroupId"))
+                                .setUserId(rs.getLong("USERID"))
                                 .setUpn(rs.getNString("UPN"));
 
                         log.debug("{}Got a license {}", logPrefix, dto);
@@ -328,6 +335,84 @@ public class DatabaseFunctions {
             log.error("{}SQL Exception encountered", logPrefix, ex);
         }
         return null;
+    }
+
+    boolean writeLicenseHistoryRecord(Long licenseId, ReturnReason reason) {
+        final String logPrefix = "writeLicenseHistoryRecord() - ";
+        log.trace("{}Entering Method", logPrefix);
+        log.info("{}Writing license history record", logPrefix);
+        LicenseDTO lic = getLicenseFromDB(licenseId);
+        if (lic == null) {
+            log.warn("{}License ID {} not found. Not writing history record", logPrefix, licenseId);
+            return false;
+        }
+
+        String sql = "INSERT INTO LIC_LICENSE_HISTORY (ID, USERID, LICENSEGROUPID, CLOUDPLATFORMID, ISSUEDATETIME, RETURNDATETIME, RETURNREASON) "
+                + "VALUES (NEXT VALUE FOR SEQ_LIC_LICENSE_HISTORY, ?, ?, ?, ?, ?, ?)";
+        try (Connection dbConnection = cdc.getDatabaseConnection()) {
+            dbConnection.setAutoCommit(false);
+            try (PreparedStatement ps = dbConnection.prepareStatement(sql)) {
+                ps.setLong(1, lic.getUserId());
+                ps.setLong(2, lic.getLicenseGroupId());
+                ps.setLong(3, lic.getCloudPlatformId());
+                ps.setTimestamp(4, Timestamp.valueOf(lic.getIssueDate()));
+                ps.setTimestamp(5, Timestamp.valueOf(LocalDateTime.now()));
+                ps.setNString(6, reason.name());
+                traceLogSql(logPrefix, sql, licenseId, lic.getLicenseGroupId(), lic.getCloudPlatformId(), lic.getIssueDate(), LocalDateTime.now(), reason.name());
+                int rows = ps.executeUpdate();
+                if (rows == 1) {
+                    log.debug("{}Successfully added {} history rows to the database", logPrefix, rows);
+                    dbConnection.commit();
+                    return true;
+                }
+                else {
+                    log.error("{}A total of {} rows were added. This should have been 1.", logPrefix, rows);
+                    dbConnection.rollback();
+                    return false;
+                }
+            }
+        }
+        catch (SQLException ex) {
+            log.error("{}SQL Exception encountered", logPrefix, ex);
+        }
+
+        return false;
+    }
+
+    List<LicenseDTO> getExpiredLicensesFromDB() {
+        final String logPrefix = "getExpiredLicensesFromDB() - ";
+        log.trace("{}Entering Method", logPrefix);
+
+        log.info("{}Looking up all expired licenses", logPrefix);
+        List<LicenseDTO> expiredLicenses = new ArrayList<>();
+        String sql = "SELECT LIC.Id, LIC.LicenseIssueDateTime, LIC.LicenseExpiryDateTime, U.UPN, LIC.CloudPlatformID,\n"
+                + " LIC.LicenseGroupId, U.ID USERID FROM LIC_ISSUED_LICENSE LIC\n"
+                + " INNER JOIN PROV_USER U ON U.Id = LIC.UserId\n"
+                + " WHERE LIC.LicenseExpiryDateTime < GETDATE()\n"
+                + " ORDER BY LIC.LicenseExpiryDateTime";
+        try (Connection dbConnection = cdc.getDatabaseConnection()) {
+            try (PreparedStatement ps = dbConnection.prepareStatement(sql)) {
+                traceLogSql(logPrefix, sql);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        LicenseDTO dto = new LicenseDTO()
+                                .setId(rs.getLong("Id"))
+                                .setCloudPlatformId(rs.getLong("CloudPlatformId"))
+                                .setExpiryDate(rs.getTimestamp("LicenseExpiryDateTime").toLocalDateTime())
+                                .setIssueDate(rs.getTimestamp("LicenseIssueDateTime").toLocalDateTime())
+                                .setLicenseGroupId(rs.getLong("LicenseGroupId"))
+                                .setUserId(rs.getLong("USERID"))
+                                .setUpn(rs.getNString("UPN"));
+                        expiredLicenses.add(dto);
+                    }
+                }
+            }
+        }
+        catch (SQLException ex) {
+            log.error("{}SQL Exception encountered", logPrefix, ex);
+        }
+        log.info("{}Found {} expired licenses in databsae", logPrefix, expiredLicenses.size());
+        return expiredLicenses;
     }
 
     private void traceLogSql(String logPrefix, String sql, Object... parameters) {

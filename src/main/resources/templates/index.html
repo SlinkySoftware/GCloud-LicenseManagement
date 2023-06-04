@@ -30,6 +30,30 @@
         <div class="container-fluid">
             <div th:replace="~{segments/header :: header}" ></div>
             <div sec:authorize="isAuthenticated()">
+                <div class="modal fade" id="revokeConfimDialog" tabindex="-1" role="dialog">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="revokeConfirmLabel">Are you sure?</h5>
+                                <button type="button" class="btn-close" onclick="cancelRevoke()"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>This will return your license. You will not be able to log into PureCloud until you allocate yourself a new license.</p>
+                                <p>If you continue, you will be <strong>forcefully logged out</strong> of PureCloud.</p>
+                                <p>Are you sure you wish to continue?</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-danger" id="btnRevokeCancel" onclick="cancelRevoke()"><i class="fas fa-ban"></i> No</button>
+                                <button type="button" class="btn btn-outline-success" id="btnRevokeConfirm" data-license-id="NOT_SET" data-row-id="NOT_SET" onclick="completeRevoke()"><i class="fas fa-check"></i> Yes <span
+                                        class="spinner-border spinner-border-sm"
+                                        style="display: none;"
+                                        role="status" id="spinnerRevoke"
+                                        aria-hidden="true"
+                                        ></span></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div class="row justify-content-center"><div class="col-10"><h4>My Licenses</h4></div></div>
                 <div class="row justify-content-center">
                     <div class="col-10 text-left">

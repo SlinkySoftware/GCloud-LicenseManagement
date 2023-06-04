@@ -26,7 +26,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -83,7 +82,7 @@ public class LicenseManagement {
                     .setMessage("User: " + upn + " is not configured and could not check out a license")
                     .setSource("LicenseManagement.createUserLicense()")
                     .setDetails("Cloud Platform ID " + cloudPlatformId + " | License Group ID: null");
-            ;
+            
             alertFunc.alertPlatformAdmins(am);
             return response;
         }
@@ -271,7 +270,7 @@ public class LicenseManagement {
     }
 
     // Return License
-    public BooleanResponse returnUserLicense(String upn, Long licenseId) {
+    public BooleanResponse returnUserLicense(String upn, Long licenseId, ReturnReason reason) {
         final String logPrefix = "returnUserLicense(S,L) - ";
         log.trace("{}Entering Method", logPrefix);
         if (licenseId == null || licenseId == 0) {
@@ -292,7 +291,7 @@ public class LicenseManagement {
             return response;
         }
 
-        return returnUserLicense(licenseId);
+        return returnUserLicense(licenseId, reason);
     }
 
     // Extend license
@@ -349,7 +348,7 @@ public class LicenseManagement {
     }
 
     // Return License
-    public BooleanResponse returnUserLicense(Long licenseId) {
+    public BooleanResponse returnUserLicense(Long licenseId, ReturnReason reason) {
         final String logPrefix = "returnUserLicense(L,B) - ";
         log.trace("{}Entering Method", logPrefix);
         if (licenseId == null || licenseId == 0) {
@@ -364,20 +363,6 @@ public class LicenseManagement {
         LicenseDTO license = dbFunc.getLicenseFromDB(licenseId);
         String upn = license.getUpn();
         Long cloudPlatformId = license.getCloudPlatformId();
-        log.debug("{}Getting license group details", logPrefix);
-        Map<String, Object> licenseGroupDetails = dbFunc.getUserLicenseGroupDetails(upn, cloudPlatformId);
-        if (licenseGroupDetails == null) {
-            response.setFriendlyMessage("Your account is not configured correctly. Please contact your team leader.");
-            response.setDetailedMessage("Unable to retrieve license group details");
-            response.setSuccess(false);
-            AlertMessage am = new AlertMessage()
-                    .setSubject("GCloud Licensing - User not configured")
-                    .setMessage("User: " + upn + " is not configured and could not extend their license")
-                    .setSource("LicenseManagement.createUserLicense()")
-                    .setDetails("Cloud Platform ID " + cloudPlatformId + " | License Group ID: null");
-            alertFunc.alertPlatformAdmins(am);
-            return response;
-        }
 
         // Remove from AD Group
         log.debug("{}About to remove user from AD Group", logPrefix);
@@ -397,10 +382,7 @@ public class LicenseManagement {
                         .setSource("LicenseManagement.createUserLicense()")
                         .setDetails(
                                 "Cloud Platform ID: " + cloudPlatformId
-                                + " | License Group ID: " + (Long) licenseGroupDetails.get("LICENSEGROUPID")
                                 + " | User UPN: " + upn
-                                + " | User Name: " + (String) licenseGroupDetails.get("USERFULLNAME")
-                                + " | User Type: " + (String) licenseGroupDetails.get("USERTYPENAME")
                                 + " | Azure AD Group: " + groupName
                         );
                 alertFunc.alertPlatformAdmins(am);
@@ -413,11 +395,31 @@ public class LicenseManagement {
 
         // Log out agent
         log.debug("{}About to force user out of Genesys", logPrefix);
-        if (!cloudFunc.forceLogOutUser(upn)) {
+        if (!cloudFunc.forceLogOutUser(upn, cloudPlatformId)) {
             response.setSuccess(false)
                     .setDetailedMessage("Error logging user out of Cloud")
                     .setFriendlyMessage("There was an error returning your license");
             return response;
+        }
+
+        // Write history record
+        log.debug("{}About to write history record", logPrefix);
+        if (!dbFunc.writeLicenseHistoryRecord(licenseId, reason)) {
+            log.warn("{}Unable to write history record. Alerting", logPrefix);
+            AlertMessage am = new AlertMessage()
+                    .setSubject("GCloud Licensing - License History Failed")
+                    .setMessage("Could not write history record to database. This is not critical and does not impact the user.")
+                    .setSource("LicenseManagement.createUserLicense()")
+                    .setDetails(
+                            "Cloud Platform ID: " + cloudPlatformId
+                            + " | License ID: " + licenseId
+                            + " | User UPN: " + upn
+                            + " | Azure AD Group: " + groupName
+                    );
+            alertFunc.alertPlatformAdmins(am);
+        }
+        else {
+            log.debug("{}History record written succesfully", logPrefix);
         }
 
         // Delete from Database
@@ -447,6 +449,27 @@ public class LicenseManagement {
         List<PlatformDTO> platforms = dbFunc.getPlatformsForUserFromDB(upn);
         log.info("{}Found a total of {} platforms for user {}", logPrefix, platforms.size(), upn);
         return platforms;
+    }
+
+    public enum ReturnReason {
+        AGENT_REQEUST,
+        ADMIN_FORCE,
+        EXPIRED
+    }
+
+    public void expireOldLicenses() {
+        final String logPrefix = "expireOldLicenses() - ";
+        log.trace("{}Entering Method", logPrefix);
+        log.debug("{}Get expired licenses from DB", logPrefix);
+        List<LicenseDTO> expiredLicenses = dbFunc.getExpiredLicensesFromDB();
+        log.trace("{}Iterating licenses", logPrefix);
+        for (LicenseDTO lic : expiredLicenses) {
+            log.trace("{}Expiring : {}", logPrefix, lic);
+            BooleanResponse resp = returnUserLicense(lic.getId(), ReturnReason.EXPIRED);
+            log.debug("{}Expiry status for {} is {} - ErrorCode: {}", logPrefix, lic.getId(), resp.isSuccess(), resp.getDetailedMessage());
+        }
+        log.info("{}Finished expiring licenses", logPrefix);
+        log.trace("{}Leaving Method", logPrefix);
     }
 
 }

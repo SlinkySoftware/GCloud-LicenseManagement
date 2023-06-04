@@ -1,5 +1,5 @@
 /*
- *   gcloudlicensemanagement - JavaMailExtension.java
+ *   gcloudlicensemanagement - Scheduler.java
  *
  *   Copyright (c) 2022-2023, Slinky Software
  *
@@ -19,41 +19,41 @@
  */
 package com.slinkytoybox.gcloud.licensing.init;
 
+import com.slinkytoybox.gcloud.licensing.businesslogic.LicenseManagement;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.core.env.Environment;
-import org.springframework.mail.javamail.JavaMailSenderImpl;
-import org.springframework.stereotype.Service;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 
 /**
  *
  * @author Michael Junek (michael@juneks.com.au)
- *
  */
-
+@Component
 @Slf4j
-@Service("JavaMailExtension")
 @DependsOn("CloudDatabaseConnection")
-public class JavaMailExtension {
-    
+
+public class Scheduler {
+
+    @Autowired
+    private LicenseManagement licMgmt;
+
     @Autowired
     private Environment env;
-    
-    @Bean
-    public JavaMailSenderImpl mailSender() {
-        JavaMailSenderImpl javaMailSender = new JavaMailSenderImpl();
 
-        javaMailSender.setProtocol("smtp");
-        
-        javaMailSender.setHost(env.getProperty("smtp.server"));
-        javaMailSender.setPort(env.getProperty("smtp.port", Integer.class, 25));
-        javaMailSender.setUsername(env.getProperty("smtp.username"));
-        javaMailSender.setPassword(env.getProperty("smtp.password"));
-        
+    @Scheduled(fixedDelayString = "${expiry.repeat.seconds:120}000", initialDelayString = "${expiry.delay.seconds:30}000")
+    public void runExpirySchedule() {
+        final String logPrefix = "runExpirySchedule() - ";
+        log.trace("{}Entering Method", logPrefix);
 
-        return javaMailSender;
+        boolean expiryEnabled = env.getProperty("expiry.enabled", Boolean.class, Boolean.TRUE);
+        log.info("{}Expiry Enabled? {}", logPrefix, expiryEnabled);
+        if (expiryEnabled) {
+            log.info("{}Scheduler running expiry routine", logPrefix);
+            licMgmt.expireOldLicenses();
+        }
+        log.trace("{}Leaving Method", logPrefix);
     }
-    
 }

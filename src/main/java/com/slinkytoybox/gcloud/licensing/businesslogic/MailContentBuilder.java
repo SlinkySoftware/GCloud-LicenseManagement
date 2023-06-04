@@ -43,6 +43,7 @@ public class MailContentBuilder {
         log.trace("{}Entering method", logPrefix);
         Context context = new Context();
         context.setVariable("mailTemplate", templateObject);
+        log.trace("{}Added templateObject as mailTemplate: {}", logPrefix, templateObject);
         log.debug("{}Processing alert message against template: {}", logPrefix, template);
         return templateEngine.process("email/" + template, context);
     }

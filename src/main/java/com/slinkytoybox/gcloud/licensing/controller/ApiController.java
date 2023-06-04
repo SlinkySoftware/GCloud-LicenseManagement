@@ -21,6 +21,7 @@ package com.slinkytoybox.gcloud.licensing.controller;
 
 import com.slinkytoybox.gcloud.licensing.dto.internal.LicenseDTO;
 import com.slinkytoybox.gcloud.licensing.businesslogic.LicenseManagement;
+import com.slinkytoybox.gcloud.licensing.businesslogic.LicenseManagement.ReturnReason;
 import com.slinkytoybox.gcloud.licensing.dto.request.*;
 import com.slinkytoybox.gcloud.licensing.dto.response.*;
 import com.slinkytoybox.gcloud.licensing.security.roles.RoleUser;
@@ -138,7 +139,7 @@ public class ApiController {
                     resp.setFriendlyMessage("License return request is invalid");
                     return ResponseEntity.badRequest().body(resp);
                 }
-                resp = licMgmt.returnUserLicense(licenseRequest.getLicenseId());
+                resp = licMgmt.returnUserLicense(licenseRequest.getLicenseId(), ReturnReason.AGENT_REQEUST);
             }
 
             default -> {

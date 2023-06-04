@@ -31,12 +31,14 @@ import lombok.experimental.Accessors;
 @Data
 @Accessors(chain = true)
 public class LicenseDTO implements Serializable {
-    
+
     private Long id;
     private LocalDateTime issueDate;
     private LocalDateTime expiryDate;
     private String upn;
+    private Long userId;
     private Long cloudPlatformId;
     private boolean canExtend;
-    
+    private Long licenseGroupId;
+
 }
