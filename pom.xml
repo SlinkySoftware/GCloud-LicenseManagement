@@ -45,7 +45,7 @@
         <maven.compiler.release>17</maven.compiler.release>
 
         <mssql.version>11.2.3.jre17</mssql.version>
-        <purecloud.version>176.0.0</purecloud.version>
+        <purecloud.version>177.2.0</purecloud.version>
         <opensaml.version>4.3.0</opensaml.version>
         <microsoftgraph.version>5.56.0</microsoftgraph.version>
         <msadal.version>1.6.7</msadal.version>
@@ -132,7 +132,7 @@
         <dependency>
             <groupId>org.sonarsource.scanner.maven</groupId>
             <artifactId>sonar-maven-plugin</artifactId>
-            <version>3.9.1.2184</version>
+            <version>3</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
