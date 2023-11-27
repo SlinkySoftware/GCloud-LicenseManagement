@@ -48,7 +48,7 @@ public class AzureADFunctions {
     private GraphServiceClient graphClient;
 
     @PostConstruct
-    private void setup() {
+    public void setup() {
         final String logPrefix = "setup() - ";
         log.trace("{}Entering Method", logPrefix);
         graphClient = adConn.getClient();
@@ -94,6 +94,10 @@ public class AzureADFunctions {
         }
 
         Group adGroup = groupList.get(0);
+        if (adGroup == null || adGroup.id == null) {
+            log.error("{}AD Group returned null or Null ID!", logPrefix);
+            return false;
+        }
         
         log.trace("{}Found GroupID: {} for Group Name {}", logPrefix, adGroup.id, adGroup.displayName);
 
@@ -116,6 +120,10 @@ public class AzureADFunctions {
                 log.trace("{}Found {} members total", logPrefix, users.size());
 
                 for (User usr : users) {
+                    if (usr.userPrincipalName == null) {
+                        log.error("{}User {} does not have a UPN. Why?", logPrefix, upn); 
+                        continue;
+                    }
                     log.trace("{}Found user: {} = {}", logPrefix, usr.id, usr.userPrincipalName);
                     if (addUser && usr.userPrincipalName.equals(upn)) {
                         log.info("{}User {} is already a member of group {} - doing nothing", logPrefix, upn, groupName);
